@@ -1,0 +1,7 @@
+from os.path import join
+
+__EXPORT_BASIC__ = True
+
+DATA_BASE_PATH = 'data/'
+DATA_PATH_TRANSLATION = join(DATA_BASE_PATH, 'i18n')
+DATA_PATH_CONSTANT = join(DATA_BASE_PATH, 'constant')
