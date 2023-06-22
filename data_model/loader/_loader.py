@@ -3,7 +3,6 @@ import copy
 import os
 import json
 from data_model.config import DATA_BASE_PATH
-from functools import partial
 
 
 def join_path(basepath, path):
@@ -14,7 +13,6 @@ class BaseLoader(abc.ABC):
     def __init__(self, namespace: list, base_path: str = DATA_BASE_PATH):
         self.base_path = base_path
         self.namespace = copy.deepcopy(namespace)
-        self.process()
 
         self.json_all = self.load_json("all.json")
         self.including = self.json_all["include"]
@@ -23,7 +21,7 @@ class BaseLoader(abc.ABC):
         else:
             self.namespace.append(self.json_all["name"])
 
-        # 暴露JSON
+        self.process()
 
     def load_json(self, path):
         with open(os.path.join(self.base_path, path), mode="r", encoding="UTF-8") as file:

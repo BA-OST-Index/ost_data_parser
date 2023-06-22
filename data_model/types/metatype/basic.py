@@ -7,7 +7,7 @@ import functools
 
 __all__ = ["BasicType", "BasicModel", "Integer", "String", "Bool",
            "MultipleBasicModelList", "MultipleBasicModelListManager",
-           "MultipleBasicModelListManager", "ToJsonMixin"]
+           "MultipleBasicModelListManager", "ToJsonMixin", "ToJsonReminderMixin"]
 
 
 def genetic_validator(value, target_type):
@@ -16,7 +16,17 @@ def genetic_validator(value, target_type):
     raise ValueError("The value %r is not an instance of %r" % (value, target_type))
 
 
-class ToJsonMixin:
+class ToJsonReminderMixin:
+    @abc.abstractmethod
+    def to_json(self):
+        pass
+
+    @abc.abstractmethod
+    def to_json_basic(self):
+        pass
+
+
+class ToJsonMixin(ToJsonReminderMixin):
     def to_json(self):
         """返回一个元组 (str, Any) 其中第一个为自己的公开名字，另一个则为符合标准的JSON对象（字典/列表）"""
         dict_ = dict()

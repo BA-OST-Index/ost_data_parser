@@ -1,152 +1,13 @@
-import json
-import data_model._constant.file_type as FILE_TYPE
-from collections import OrderedDict
 from data_model.types.url import *
 from data_model.types.metatype.basic import *
 from data_model.types.metatype.complex import *
 from data_model.types.lang_string import *
 from data_model.loader.i18n import i18n_translator
 from data_model.loader.constant import constant_manager
+from data_model.actual_data._track.track_used_by import *
+from data_model.actual_data._track.track_version import *
 
-__all__ = ["TrackInfo"]
-
-
-# ---------------------------------------------------------
-# TrackUsedBy
-
-class OrderedDictWithCounter:
-    def __init__(self):
-        self.ordered_dict = OrderedDict()
-        self.counter = dict()
-
-    def add(self, unique_id, data):
-        if unique_id in self.ordered_dict.keys():
-            self.counter[unique_id] += 1
-        else:
-            self.ordered_dict[unique_id] = data
-            self.counter[unique_id] = 1
-
-    def get_counter_with_data(self):
-        return OrderedDict((key, [value, self.counter[key]])
-                           for key, value in self.ordered_dict.items())
-
-
-class _TrackUsedBy_ToJsonMixin(ToJsonMixin):
-    def to_json(self):
-        t = dict((key, []) for key in self._components)
-        for key, value in t.items():
-            data = getattr(self, key).get_counter_with_data()
-            t[key] = OrderedDict((key, [value[0].to_json(), value[1]])
-                                 for key, value in data.items())
-        return self.key_name, t
-
-    def to_json_basic(self):
-        t = dict((key, []) for key in self._components)
-        for key, value in t.items():
-            data = getattr(self, key).get_counter_with_data()
-            t[key] = OrderedDict((key, [value[0].to_json_basic(), value[1]])
-                                 for key, value in data.items())
-        return self.key_name, t
-
-
-class _TrackUsedBy_other(_TrackUsedBy_ToJsonMixin):
-    __slots__ = ("ui", "other", "video", "key_name", "data")
-    _components = ("ui", "video")  # "other" is not possible through parent method to read
-
-    def __init__(self):
-        self.key_name = "other"
-        self.ui = OrderedDictWithCounter()
-        self.other = MultipleLangStringModelList('other')
-        self.video = OrderedDictWithCounter()
-
-    def load_other(self, data: list):
-        for i in data:
-            self.other.append(i18n_translator[i])
-
-    def add(self, unique_id, data):
-        if data.file_type == FILE_TYPE.FILE_UI_PARENT:
-            raise ValueError("Only supports UI_CHILD object.")
-        elif data.file_type == FILE_TYPE.FILE_UI_CHILD:
-            self.ui.add(unique_id, data)
-        elif data.file_type == FILE_TYPE.FILE_VIDEO_INFO:
-            self.video.add(unique_id, data)
-        else:
-            raise TypeError("The object %r (id: %r) is not supported!" % (data, unique_id))
-
-    def to_json(self):
-        """Overriding the parent's method in order to access `self.other`"""
-        key, data = super().to_json()
-        data["other"] = [value[-1] for value in self.other.to_json()[-1]]
-        return key, data
-
-    def to_json_basic(self):
-        key, data = super().to_json_basic()
-        data["other"] = [value[-1] for value in self.other.to_json_basic()[-1]]
-        return key, data
-
-
-class _TrackUsedBy_battle(_TrackUsedBy_ToJsonMixin):
-    __slots__ = ("main", "event", "arena", "total_assault", "bounty_hunt", "school_exchange", "special_commission",
-                 "data", "key_name")
-    _components = ("main", "event", "arena", "total_assault", "bounty_hunt", "school_exchange", "special_commission")
-
-    def __init__(self):
-        self.key_name = "story"
-        self.main = OrderedDictWithCounter()
-        self.event = OrderedDictWithCounter()
-        self.arena = OrderedDictWithCounter()
-        self.total_assault = OrderedDictWithCounter()
-        self.bounty_hunt = OrderedDictWithCounter()
-        self.school_exchange = OrderedDictWithCounter()
-        self.special_commission = OrderedDictWithCounter()
-
-    def add(self, unique_id, data):
-        if data.file_type == FILE_TYPE.FILE_BATTLE_MAIN:
-            self.main.add(unique_id, data)
-        elif data.file_type == FILE_TYPE.FILE_BATTLE_EVENT:
-            self.event.add(unique_id, data)
-        elif data.file_type == FILE_TYPE.FILE_BATTLE_ARENA:
-            self.arena.add(unique_id, data)
-        elif data.file_type == FILE_TYPE.FILE_BATTLE_TOTAL_ASSAULT:
-            self.total_assault.add(unique_id, data)
-        elif data.file_type == FILE_TYPE.FILE_BATTLE_BOUNTY_HUNT:
-            self.total_assault.add(unique_id, data)
-        elif data.file_type == FILE_TYPE.FILE_BATTLE_SCHOOL_EXCHANGE:
-            self.school_exchange.add(unique_id, data)
-        elif data.file_type == FILE_TYPE.FILE_BATTLE_SPECIAL_COMMISSION:
-            self.school_exchange.add(unique_id, data)
-        else:
-            raise TypeError("The object %r (id: %r) is not a battle!" % (data, unique_id))
-
-
-class _TrackUsedBy_story(_TrackUsedBy_ToJsonMixin):
-    __slots__ = ("main", "side", "short", "bond", "event", "other", "key_name", "data")
-    _components = ("main", "side", "short", "bond", "event", "other")
-
-    def __init__(self):
-        self.key_name = "story"
-        self.main = OrderedDictWithCounter()
-        self.side = OrderedDictWithCounter()
-        self.short = OrderedDictWithCounter()
-        self.bond = OrderedDictWithCounter()
-        self.event = OrderedDictWithCounter()
-        self.other = OrderedDictWithCounter()
-
-    def add(self, unique_id, data):
-        if data.file_type == FILE_TYPE.FILE_STORY_MAIN:
-            self.main.add(unique_id, data)
-        elif data.file_type == FILE_TYPE.FILE_STORY_SIDE:
-            self.side.add(unique_id, data)
-        elif data.file_type == FILE_TYPE.FILE_STORY_SHORT:
-            self.short.add(unique_id, data)
-        elif data.file_type == FILE_TYPE.FILE_STORY_EVENT:
-            self.event.add(unique_id, data)
-        elif data.file_type == FILE_TYPE.FILE_STORY_OTHER:
-            self.other.add(unique_id, data)
-        elif data.file_type == FILE_TYPE.FILE_STORY_BOND:
-            self.bond.add(unique_id, data)
-        else:
-            raise TypeError("The object %r (id: %r) is not a story!" % (data, unique_id))
+__all__ = ["TrackInfo", "TrackListManager"]
 
 
 class TrackUsedBy(BasicModel):
@@ -155,9 +16,9 @@ class TrackUsedBy(BasicModel):
 
     def __init__(self, key_name="used_by"):
         super().__init__(key_name)
-        self.story = _TrackUsedBy_story()
-        self.battle = _TrackUsedBy_battle()
-        self.other = _TrackUsedBy_other()
+        self.story = TrackUsedBy_story()
+        self.battle = TrackUsedBy_battle()
+        self.other = TrackUsedBy_other()
 
     def load(self, data):
         super().load(data)
@@ -177,9 +38,6 @@ class TrackUsedBy(BasicModel):
             t[i] = data
         return self.key_name, t
 
-
-# ---------------------------------------------------------
-# TrackSpecialCase
 
 class TrackSpecialCase(BasicModel):
     _all = ["is_ost", "is_bond_memory", "is_story", "is_battle", "is_event"]
@@ -217,42 +75,6 @@ class TrackSpecialCase(BasicModel):
                  for key, value in cls._counter.items())
         return t
 
-
-# ---------------------------------------------------------
-# TrackVersion & TrackVersionList
-
-class TrackVersion(BasicModel):
-    is_main = Bool('is_main')
-    _components = ["url", "desc", "is_main"]
-
-    def __init__(self):
-        super().__init__(None)
-        self.url = MultipleUrlModelList('url')
-        self.desc = LangStringModel()
-
-    def load(self, data):
-        super().load(data)
-        self.is_main = data["is_main"]
-        self.desc.load(constant_manager.query("ost", data["desc"]))
-        for i in data["url"]:
-            m = UrlModel()
-            m.load(i)
-            self.url.append(m)
-
-    def to_json(self):
-        return None, dict((key, getattr(self, key))
-                          for key in self._components)
-
-    def to_json_basic(self):
-        return self.to_json()[-1]
-
-
-class TrackVersionList(MultipleBasicModelList):
-    def __init__(self, key_name):
-        super().__init__(key_name, TrackVersion)
-
-
-# ---------------------------------------------------------
 
 class TrackName(BasicModel):
     def __init__(self, key_name):
@@ -395,6 +217,22 @@ class TrackInfo:
     duration = Integer("duration")
     file_type = Integer("file_type")
     uuid = UUID("uuid")
+    _instance = {}
+    _filetype_id_map = {"1": "OST", "2": "short",
+                        "3": "animation", "4": "other"}
+
+    def __new__(cls, *args, **kwargs):
+        try: data = args[0]
+        except Exception: data = kwargs["data"]
+
+        instance_id = "_".join([cls._filetype_id_map[str(data["file_type"])],
+                                str(data["no"])])
+        if instance_id in cls._instance.keys():
+            return cls._instance[instance_id]
+
+        new = super().__new__(cls)
+        cls._instance[instance_id] = new
+        return new
 
     def __init__(self, data: dict):
         self.data = data
@@ -459,4 +297,41 @@ class TrackInfo:
             "desc": self.desc.to_json_basic(),
             "composer": self.composer.to_json_basic()
         }
+        return t
+
+    @classmethod
+    def get_instance(cls, instance_id):
+        return cls._instance[instance_id]
+
+
+class TrackListManager(MultipleBasicModelListManager):
+    def __init__(self, key_name="track"):
+        super().__init__(key_name)
+        self.track = []
+
+    def load(self, data: list):
+        for i in data:
+            if isinstance(i, list):
+                self.track.append([TrackInfo.get_instance(i[0]), i[1]])
+            else:
+                self.track.append(TrackInfo.get_instance(i))
+
+    def to_json(self):
+        t = []
+        for i in self.track:
+            if isinstance(i, list):
+                t.append([i[0].to_json(), i[1]])
+            else:
+                t.append(i.to_json())
+
+        return self.key_name, t
+
+    def to_json_basic(self):
+        t = []
+        for i in self.track:
+            if isinstance(i, list):
+                t.append([i[0].to_json(), i[1]])
+            else:
+                t.append(i.to_json_basic())
+
         return t
