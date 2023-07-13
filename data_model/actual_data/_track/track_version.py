@@ -1,4 +1,4 @@
-from data_model.types.metatype.basic import Bool, BasicModel, MultipleBasicModelList
+from data_model.types.metatype.basic import Bool, BaseDataModel, BaseDataModelList
 from data_model.types.url import UrlModel, MultipleUrlModelList
 from data_model.types.lang_string import LangStringModel
 from data_model.loader import constant_manager
@@ -9,7 +9,7 @@ __all__ = ["TrackVersion", "TrackVersionList"]
 # ---------------------------------------------------------
 # TrackVersion & TrackVersionList
 
-class TrackVersion(BasicModel):
+class TrackVersion(BaseDataModel):
     is_main = Bool('is_main')
     _components = ["url", "desc", "is_main"]
 
@@ -28,13 +28,12 @@ class TrackVersion(BasicModel):
             self.url.append(m)
 
     def to_json(self):
-        return None, dict((key, getattr(self, key))
-                          for key in self._components)
+        return {key: getattr(self, key) for key in self._components}
 
     def to_json_basic(self):
-        return self.to_json()[-1]
+        return self.to_json()
 
 
-class TrackVersionList(MultipleBasicModelList):
+class TrackVersionList(BaseDataModelList):
     def __init__(self, key_name):
         super().__init__(key_name, TrackVersion)

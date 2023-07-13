@@ -1,9 +1,9 @@
-from .metatype.basic import BasicModel, String, MultipleBasicModelList
+from .metatype.basic import BaseDataModel, String, BaseDataModelList
 from .lang_string import LangStringModel
 from ..loader.constant import constant_manager
 
 
-class TagModel(BasicModel):
+class TagModel(BaseDataModel):
     ALL_TAGS = {}
     tag_id = String('tag_id')
     color = String('color')
@@ -34,7 +34,7 @@ class TagModel(BasicModel):
         return self.to_json()[1]
 
 
-class MultipleTagModelList(MultipleBasicModelList):
+class MultipleTagModelList(BaseDataModelList):
     def __init__(self, key_name):
         super().__init__(key_name, TagModel)
 

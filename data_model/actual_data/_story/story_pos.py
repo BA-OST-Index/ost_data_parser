@@ -5,7 +5,7 @@ __all__ = ["StoryPosBond", "StoryPosEvent", "StoryPosMainSideShortOther",
            "storyPosAuto"]
 
 
-class StoryPos(BasicModel, abc.ABC):
+class StoryPos(BaseDataModel, abc.ABC):
     _components = []
 
     def __init__(self, key_name):
@@ -20,10 +20,10 @@ class StoryPos(BasicModel, abc.ABC):
 
     def to_json(self):
         t = dict((key, getattr(self, key)) for key in self._components)
-        return self.key_name, t
+        return t
 
     def to_json_basic(self):
-        return self.to_json()[-1]
+        return self.to_json()
 
 
 class StoryPosMainSideShortOther(StoryPos):

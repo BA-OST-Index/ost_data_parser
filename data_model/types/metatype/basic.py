@@ -5,9 +5,9 @@ import functools
 
 # logging.basicConfig(level=logging.DEBUG)
 
-__all__ = ["BasicType", "BasicModel", "Integer", "String", "Bool",
-           "MultipleBasicModelList", "MultipleBasicModelListManager",
-           "MultipleBasicModelListManager", "ToJsonMixin", "ToJsonReminderMixin"]
+__all__ = ["BaseType", "BaseDataModel", "Integer", "String", "Bool",
+           "BaseDataModelList", "BaseDataModelListManager",
+           "BaseDataModelListManager", "IToJsonMixin", "IToJson"]
 
 
 def genetic_validator(value, target_type):
@@ -16,7 +16,7 @@ def genetic_validator(value, target_type):
     raise ValueError("The value %r is not an instance of %r" % (value, target_type))
 
 
-class ToJsonReminderMixin:
+class IToJson:
     @abc.abstractmethod
     def to_json(self):
         pass
@@ -26,7 +26,7 @@ class ToJsonReminderMixin:
         pass
 
 
-class ToJsonMixin(ToJsonReminderMixin):
+class IToJsonMixin(IToJson):
     def to_json(self):
         """返回一个元组 (str, Any) 其中第一个为自己的公开名字，另一个则为符合标准的JSON对象（字典/列表）"""
         dict_ = dict()
@@ -45,7 +45,7 @@ class DescriptorNameMixin(abc.ABC):
         self.public_name = name
 
 
-class BasicType(DescriptorNameMixin, abc.ABC):
+class BaseType(DescriptorNameMixin, abc.ABC):
     """Modified from https://docs.python.org/3/howto/descriptor.html#customized-names"""
 
     def __init__(self, name, type_name, no):
@@ -71,9 +71,9 @@ class BasicType(DescriptorNameMixin, abc.ABC):
         pass
 
 
-class BasicModel(abc.ABC, ToJsonMixin):
+class BaseDataModel(abc.ABC, IToJsonMixin):
     """
-    代表一个高层的数据模型，其中所有的内容的检查都委托给类变量中的继承 BasicType 的对象的类型检查。
+    代表一个高层的数据模型，其中所有的内容的检查都委托给类变量中的继承 BaseType 的对象的类型检查。
 
     此类支持直接对其赋值一个JSON文件里的内容（如字典）来实现自动将内容加载到对象中。
 
@@ -90,7 +90,7 @@ class BasicModel(abc.ABC, ToJsonMixin):
         self.data = data
 
 
-class MultipleBasicModelList(abc.ABC, ToJsonMixin):
+class BaseDataModelList(abc.ABC, IToJson):
     def __init__(self, key_name, allowed_type):
         self.key_name = key_name
         self.basic_model_list = []
@@ -129,7 +129,7 @@ class MultipleBasicModelList(abc.ABC, ToJsonMixin):
         return t
 
 
-class MultipleBasicModelListManager(BasicModel, abc.ABC):
+class BaseDataModelListManager(BaseDataModel, abc.ABC):
     def __init__(self, key_name):
         super().__init__(key_name)
 
@@ -145,21 +145,21 @@ class MultipleBasicModelListManager(BasicModel, abc.ABC):
         return self.to_json()[-1]
 
 
-class Integer(BasicType):
+class Integer(BaseType):
     def __init__(self, name, no=0):
         super().__init__(name, "integer", no)
 
     validate = functools.partial(genetic_validator, target_type=numbers.Integral)
 
 
-class String(BasicType):
+class String(BaseType):
     def __init__(self, name, no=0):
         super().__init__(name, "string", no)
 
     validate = functools.partial(genetic_validator, target_type=str)
 
 
-class Bool(BasicType):
+class Bool(BaseType):
     def __init__(self, name, no=0):
         super().__init__(name, "bool", no)
 

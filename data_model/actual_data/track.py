@@ -10,7 +10,7 @@ from data_model.actual_data._track.track_version import *
 __all__ = ["TrackInfo", "TrackListManager"]
 
 
-class TrackUsedBy(BasicModel):
+class TrackUsedBy(BaseDataModel):
     __slots__ = ("story", "battle", "other", "key_name", "data")
     _components = ("story", "battle", "other")
 
@@ -29,17 +29,17 @@ class TrackUsedBy(BasicModel):
         for i in self._components:
             data = getattr(self, i).to_json()
             t[i] = data[-1]
-        return self.key_name, t
+        return t
 
     def to_json_basic(self):
         t = dict()
         for i in self._components:
             data = getattr(self, i).to_json_basic()
             t[i] = data
-        return self.key_name, t
+        return t
 
 
-class TrackSpecialCase(BasicModel):
+class TrackSpecialCase(BaseDataModel):
     _all = ["is_ost", "is_bond_memory", "is_story", "is_battle", "is_event"]
     _counter = dict((key, []) for key in _all)
 
@@ -54,10 +54,10 @@ class TrackSpecialCase(BasicModel):
                 self._counter[i].append(track_info)
 
     def to_json(self):
-        return self.key_name, self.data
+        return self.data
 
     def to_json_basic(self):
-        return self.to_json()[-1]
+        return self.to_json()
 
     @classmethod
     def get_counter(cls):
@@ -76,7 +76,7 @@ class TrackSpecialCase(BasicModel):
         return t
 
 
-class TrackName(BasicModel):
+class TrackName(BaseDataModel):
     def __init__(self, key_name):
         super().__init__(key_name)
         self.known_as = MultipleLangStringModelList('known_as')
@@ -88,15 +88,15 @@ class TrackName(BasicModel):
             self.known_as.append(i18n_translator[i])
 
     def to_json(self):
-        known_as = self.known_as.to_json()[-1]
-        t = {"realname": self.realname.to_json()[-1], "known_as": [value[-1] for value in known_as]}
-        return self.key_name, t
+        known_as = self.known_as.to_json()
+        t = {"realname": self.realname.to_json(), "known_as": [value for value in known_as]}
+        return t
 
     def to_json_basic(self):
-        return self.to_json()[-1]
+        return self.to_json()
 
 
-class TrackVersionListManager(MultipleBasicModelListManager):
+class TrackVersionListManager(BaseDataModelListManager):
     def __init__(self, key_name):
         super().__init__(key_name)
         self.version = TrackVersionList(key_name)
@@ -112,10 +112,10 @@ class TrackVersionListManager(MultipleBasicModelListManager):
         return self.version.to_json()
 
     def to_json_basic(self):
-        return self.to_json()[-1]
+        return self.to_json()
 
 
-class TrackTags(BasicModel):
+class TrackTags(BaseDataModel):
     def __init__(self, key_name):
         super().__init__(key_name)
         self.tags = MultipleLangStringModelList(key_name)
@@ -129,10 +129,10 @@ class TrackTags(BasicModel):
         return self.tags.to_json()
 
     def to_json_basic(self):
-        return self.to_json()[-1]
+        return self.to_json()
 
 
-class Contact(BasicModel):
+class Contact(BaseDataModel):
     platform = Integer("platform")
     _components = ["platform", "url"]
 
@@ -147,16 +147,16 @@ class Contact(BasicModel):
 
     def to_json(self):
         t = {
-            "platform": constant_manager.query("platform", self.platform).to_json()[-1],
-            "url": self.url.to_json()[-1]
+            "platform": constant_manager.query("platform", self.platform).to_json(),
+            "url": self.url.to_json()
         }
-        return self.key_name, t
+        return t
 
     def to_json_basic(self):
-        return self.to_json()[1]
+        return self.to_json()
 
 
-class Composer(BasicModel):
+class Composer(BaseDataModel):
     """
     Defines a `composer` dict.
 
@@ -196,10 +196,10 @@ class Composer(BasicModel):
         return self
 
     def to_json(self):
-        return self.key_name, {"composer_id": self.composer_id,
-                               "realname": self.realname,
-                               "nickname": self.nickname,
-                               "contact": self.contact.to_json()[-1]}
+        return {"composer_id": self.composer_id,
+                "realname": self.realname,
+                "nickname": self.nickname,
+                "contact": self.contact.to_json()}
 
     def to_json_basic(self):
         return {"composer_id": self.composer_id,
@@ -261,7 +261,7 @@ class TrackInfo:
         self.version = TrackVersionListManager('version')
         self.name = TrackName('name')
         self.used_by = TrackUsedBy()
-        self.reference = MultipleUrlModelListManager('reference')
+        self.reference = UrlModelListManager('reference')
 
         # Load Data
         self.name.load(data["name"])
@@ -271,8 +271,8 @@ class TrackInfo:
         t = {
             "uuid": self.uuid,
 
-            "name": self.name.to_json()[1],
-            "desc": self.desc.to_json()[1],
+            "name": self.name.to_json(),
+            "desc": self.desc.to_json(),
 
             "release_date": int(self.release_date.timestamp()),
             "no": self.no,
@@ -280,12 +280,12 @@ class TrackInfo:
             "duration": self.duration,
             "file_type": self.file_type,
 
-            "composer": self.composer.to_json()[1],
-            "used_by": self.used_by.to_json()[1],
-            "tags": self.tags.to_json()[1],
-            "version": self.version.to_json()[1],
-            "special_case": self.special_case.to_json()[1],
-            "reference": self.reference.to_json()[1]
+            "composer": self.composer.to_json(),
+            "used_by": self.used_by.to_json(),
+            "tags": self.tags.to_json(),
+            "version": self.version.to_json(),
+            "special_case": self.special_case.to_json(),
+            "reference": self.reference.to_json()
         }
         return t
 
@@ -304,34 +304,19 @@ class TrackInfo:
         return cls._instance[instance_id]
 
 
-class TrackListManager(MultipleBasicModelListManager):
+class TrackListManager(BaseDataModelListManager):
     def __init__(self, key_name="track"):
         super().__init__(key_name)
         self.track = []
 
     def load(self, data: list):
         for i in data:
-            if isinstance(i, list):
-                self.track.append([TrackInfo.get_instance(i[0]), i[1]])
-            else:
-                self.track.append(TrackInfo.get_instance(i))
+            self.track.append(TrackInfo.get_instance(i))
 
     def to_json(self):
-        t = []
-        for i in self.track:
-            if isinstance(i, list):
-                t.append([i[0].to_json(), i[1]])
-            else:
-                t.append(i.to_json())
-
-        return self.key_name, t
+        t = [i.to_json() for i in self.track]
+        return t
 
     def to_json_basic(self):
-        t = []
-        for i in self.track:
-            if isinstance(i, list):
-                t.append([i[0].to_json(), i[1]])
-            else:
-                t.append(i.to_json_basic())
-
+        t = [i.to_json_basic() for i in self.track]
         return t

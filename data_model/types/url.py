@@ -1,11 +1,11 @@
-from .metatype.basic import BasicModel, String, MultipleBasicModelList, Integer, MultipleBasicModelListManager
+from .metatype.basic import BaseDataModel, String, BaseDataModelList, Integer, BaseDataModelListManager
 from .metatype.complex import Url
 from ..loader.constant import constant_manager
 
-__all__ = ["UrlModel", "MultipleUrlModelList", "MultipleUrlModelListManager"]
+__all__ = ["UrlModel", "MultipleUrlModelList", "UrlModelListManager"]
 
 
-class UrlModel(BasicModel):
+class UrlModel(BaseDataModel):
     platform = Integer("platform")
     value = Url("value")
     short_desc = String("short_desc")
@@ -32,12 +32,12 @@ class UrlModel(BasicModel):
         return self.to_json()[1]
 
 
-class MultipleUrlModelList(MultipleBasicModelList):
+class MultipleUrlModelList(BaseDataModelList):
     def __init__(self, key_name):
         super().__init__(key_name, UrlModel)
 
 
-class MultipleUrlModelListManager(MultipleBasicModelListManager):
+class UrlModelListManager(BaseDataModelListManager):
     def __init__(self, key_name):
         super().__init__(key_name)
         self.url = MultipleUrlModelList(key_name)

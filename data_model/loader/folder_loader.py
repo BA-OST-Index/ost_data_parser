@@ -1,8 +1,8 @@
-from data_model.loader._loader import BaseLoader
+from data_model.loader._loader import FolderLoader
 from ..actual_data.track import TrackInfo
 
 
-class TrackFolder(BaseLoader):
+class TrackFolder(FolderLoader):
     def __init__(self, namespace: list, basepath):
         super().__init__(namespace, basepath)
 

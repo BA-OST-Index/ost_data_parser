@@ -27,6 +27,11 @@ FILE_UI_CHILD = 32
 FILE_VIDEO_INFO = 41
 
 FILE_STUDENT_INFO = 51
+FILE_CHARACTER_INFO = 52
+
+FILE_TAG_INFO = 61
+
+FILE_BACKGROUND_INFO = 71
 
 # 以下是管理文件夹结构的 all.json 文件代码
 FILE_DIR_ROOT = -10  # /data/all.json
@@ -51,9 +56,10 @@ FILE_DIR_EVENT_STORY = -43  # /data/event/xx/story/all.json
 FILE_DIR_EVENT_BATTLE = -44  # /data/event/xx/battle/all.json
 FILE_DIR_EVENT_UI = -45  # /data/event/xx/ui/all.json
 
-FILE_DIR_STUDENT_ALL = -51  # /data/student/all.json
-FILE_DIR_STUDENT_CATEGORY = -52  # /data/student/xx/all.json
-FILE_DIR_STUDENT_BOND = -53  # /data/student/xx/bond/all.json
+FILE_DIR_CHARACTER_ALL = -51  # /data/character/all.json
+FILE_DIR_CHARACTER_CATEGORY = -52  # /data/character/xx/all.json
+FILE_DIR_STUDENT_SINGLE = -53  # /data/character/student/xx/all.json
+FILE_DIR_STUDENT_BOND = -54  # /data/character/student/xx/bond/all.json
 
 FILE_DIR_UI_ALL = -61  # /data/ui/all.json
 FILE_DIR_UI_CATEGORY = -62  # /data/ui/xx/all.json
@@ -64,3 +70,12 @@ FILE_DIR_VIDEO_ALL = -71  # /data/video/all.json
 # It is now hard-coded in `data_model.config` file.
 FILE_DIR_I18N_ALL = -81  # /data/i18n/all.json
 FILE_DIR_I18N_CATEGORY = -82  # /data/i18n/xx/all.json
+
+FILE_DIR_TAG_ALL = -91  # /data/tag/all.json
+
+FILE_DIR_BACKGROUND_ALL = -101  # /data/background/all.json
+
+# /////////////////////////////////////////////////////////////////
+# Filetypes set
+FILETYPES_TRACK = [FILE_TRACK_OST, FILE_TRACK_SHORT, FILE_TRACK_OTHER, FILE_TRACK_ANIMATION]
+FILETYPES_TRACK_DIR = [FILE_DIR_TRACK_ALL, FILE_DIR_TRACK_CATEGORY]

@@ -2,7 +2,7 @@ import data_model._constant.file_type as FILE_TYPE
 from collections import OrderedDict
 from data_model.loader import i18n_translator
 from data_model.types.lang_string import MultipleLangStringModelList
-from data_model.types.metatype.basic import ToJsonMixin
+from data_model.types.metatype.basic import IToJsonMixin
 
 
 __all__ = ["TrackUsedBy_story", "TrackUsedBy_battle", "TrackUsedBy_other"]
@@ -28,7 +28,7 @@ class OrderedDictWithCounter:
                            for key, value in self.ordered_dict.items())
 
 
-class TrackUsedBy_ToJsonMixin(ToJsonMixin):
+class TrackUsedBy_ToJsonMixin(IToJsonMixin):
     def to_json(self):
         t = dict((key, []) for key in self._components)
         for key, value in t.items():

@@ -65,5 +65,8 @@ class TranslationManager:
             m.load(temp)
         return m
 
+    def get(self, key):
+        return self[key]
+
 
 i18n_translator = TranslationManager(DATA_PATH_TRANSLATION)

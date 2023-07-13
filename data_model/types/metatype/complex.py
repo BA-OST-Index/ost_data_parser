@@ -9,7 +9,7 @@ REGEX_URL = re.compile(r'\b\w+://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a
 __all__ = ["Url", "Timestamp", "UUID"]
 
 
-class Url(BasicType):
+class Url(BaseType):
     def __init__(self, name, no=0):
         super().__init__(name, "url", no)
 
@@ -18,7 +18,7 @@ class Url(BasicType):
             raise ValueError("Value %r is not URL." % value)
 
 
-class Timestamp(BasicType):
+class Timestamp(BaseType):
     """
     A timestamp, which supports Integral, datetime.datetime,
     datetime.date and time.struct_time as the input. It then
@@ -51,7 +51,7 @@ class Timestamp(BasicType):
                                       datetime.timezone.utc))
 
 
-class GeneticAutoIndexingRecord(BasicType):
+class GeneticAutoIndexingRecord(BaseType):
     """自动索引的数据记录（类CSV格式）"""
 
     def __init__(self, name, data_parts: int, no=0):
@@ -70,9 +70,9 @@ class GeneticAutoIndexingRecord(BasicType):
             raise ValueError("Record %r has data that is not an integer." % value)
 
 
-class UUID(BasicType):
+class UUID(BaseType):
     def __init__(self, name, no=0):
-        BasicType.__init__(self, name, "UUID", no)
+        BaseType.__init__(self, name, "UUID", no)
 
     def validate(self, value):
         String.validate(value)
@@ -80,11 +80,11 @@ class UUID(BasicType):
             raise ValueError("Not a proper UUID (32-bit long)!")
 
 
-class OneOf(BasicType, abc.ABC):
+class OneOf(BaseType, abc.ABC):
     """确认设置的内容是否是 options 之一。这是一个抽象类，应由具体的、预先定义好 options 的类继承。"""
 
     def __init__(self, name, options: list, no=0):
-        BasicType.__init__(self, name, "oneof", no)
+        BaseType.__init__(self, name, "oneof", no)
         self.options = options
 
     def validate(self, value):

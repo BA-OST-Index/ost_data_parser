@@ -6,7 +6,7 @@ from data_model.actual_data.track import TrackInfo, TrackListManager
 from data_model.types.lang_string import MultipleLangStringModelList
 
 
-class StoryInfo(ToJsonReminderMixin):
+class StoryInfo(IToJson):
     uuid = UUID('uuid')
     file_type = Integer('file_type')
     is_battle = bool('is_battle')
@@ -52,10 +52,10 @@ class StoryInfo(ToJsonReminderMixin):
             "track": self.track.to_json_basic(),
             "is_battle": self.is_battle
         }
-        return self.key_name, t
+        return t
 
     def to_json_basic(self):
-        return self.to_json()[-1]
+        return self.to_json()
 
 
 class StoryInfoBond(StoryInfo):
