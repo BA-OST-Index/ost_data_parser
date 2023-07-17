@@ -1,6 +1,7 @@
-from .metatype.basic import String, BaseDataModel, BaseDataModelList
+from .metatype.base_type import String
+from .metatype.base_model import BaseDataModel, BaseDataModelList
 
-__all__ = ["LangStringModel", "MultipleLangStringModelList"]
+__all__ = ["LangStringModel", "LangStringModelList", "ZhLangStringModel"]
 
 
 class LangStringModel(BaseDataModel):
@@ -86,6 +87,6 @@ class ZhLangStringModel(LangStringModel):
         return get_other()
 
 
-class MultipleLangStringModelList(BaseDataModelList):
+class LangStringModelList(BaseDataModelList):
     def __init__(self, key_name):
         super().__init__(key_name, LangStringModel)

@@ -3,9 +3,10 @@ import re
 import datetime
 import time
 import numbers
-from .basic import *
+from .base_type import *
 
 REGEX_URL = re.compile(r'\b\w+://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+REGEX_RELATIVE_PATH = re.compile(r'^(.+)\/([^\/]+)$')
 __all__ = ["Url", "Timestamp", "UUID"]
 
 
@@ -14,8 +15,10 @@ class Url(BaseType):
         super().__init__(name, "url", no)
 
     def validate(self, value):
-        if REGEX_URL.search(value) is None:
-            raise ValueError("Value %r is not URL." % value)
+        if value == "":
+            return
+        if REGEX_URL.search(value) is None and REGEX_RELATIVE_PATH.search(value) is None:
+            raise ValueError("Value %r is neither a URL or a relative path." % value)
 
 
 class Timestamp(BaseType):

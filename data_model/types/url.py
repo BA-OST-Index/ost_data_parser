@@ -1,8 +1,9 @@
-from .metatype.basic import BaseDataModel, String, BaseDataModelList, Integer, BaseDataModelListManager
+from .metatype.base_type import  String, Integer
+from .metatype.base_model import BaseDataModel, BaseDataModelList, BaseDataModelListManager
 from .metatype.complex import Url
-from ..loader.constant import constant_manager
+from ..loader.manager_constant import constant_manager
 
-__all__ = ["UrlModel", "MultipleUrlModelList", "UrlModelListManager"]
+__all__ = ["UrlModel", "UrlModelList", "UrlModelListManager"]
 
 
 class UrlModel(BaseDataModel):
@@ -22,17 +23,17 @@ class UrlModel(BaseDataModel):
 
     def to_json(self):
         t = {
-            "platform": constant_manager.query("platform", self.platform).to_json()[-1],
+            "platform": constant_manager.query("platform", self.platform).to_json(),
             "value": self.value,
             "short_desc": self.short_desc
         }
-        return self.key_name, t
+        return t
 
     def to_json_basic(self):
-        return self.to_json()[1]
+        return self.to_json()
 
 
-class MultipleUrlModelList(BaseDataModelList):
+class UrlModelList(BaseDataModelList):
     def __init__(self, key_name):
         super().__init__(key_name, UrlModel)
 
@@ -40,7 +41,7 @@ class MultipleUrlModelList(BaseDataModelList):
 class UrlModelListManager(BaseDataModelListManager):
     def __init__(self, key_name):
         super().__init__(key_name)
-        self.url = MultipleUrlModelList(key_name)
+        self.url = UrlModelList(key_name)
 
     def load(self, data: list):
         super().load(data)
@@ -50,7 +51,7 @@ class UrlModelListManager(BaseDataModelListManager):
             self.url.append(t)
 
     def to_json(self):
-        return None, self.url.to_json()[-1]
+        return self.url.to_json()[-1]
 
     def to_json_basic(self):
         return self.to_json()[-1]

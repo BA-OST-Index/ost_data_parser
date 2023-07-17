@@ -1,53 +1,80 @@
+from itertools import chain
 from data_model.types.url import *
-from data_model.types.metatype.basic import *
+from data_model.types.metatype.base_type import *
+from data_model.types.metatype.base_model import *
 from data_model.types.metatype.complex import *
 from data_model.types.lang_string import *
-from data_model.loader.i18n import i18n_translator
-from data_model.loader.constant import constant_manager
-from data_model.actual_data._track.track_used_by import *
+from data_model.loader import i18n_translator, FileLoader
+from data_model.loader.manager_constant import constant_manager
+from data_model.actual_data.used_by import BaseUsedBy, UsedByRegisterMixin, OrderedDictWithCounter, UsedByToJsonMixin
 from data_model.actual_data._track.track_version import *
+from data_model.constant.file_type import FILETYPES_STORY, FILETYPES_BATTLE, FILETYPES_UI, FILETYPES_BACKGROUND
+from data_model.actual_data.tag import TagInfo
 
 __all__ = ["TrackInfo", "TrackListManager"]
 
 
-class TrackUsedBy(BaseDataModel):
-    __slots__ = ("story", "battle", "other", "key_name", "data")
-    _components = ("story", "battle", "other")
+class TrackUsedBy(BaseUsedBy, UsedByToJsonMixin):
+    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_BATTLE, *FILETYPES_UI, *FILETYPES_BACKGROUND]
+    _components = ["data_background", "data_story", "data_battle", "data_ui"]
 
-    def __init__(self, key_name="used_by"):
-        super().__init__(key_name)
-        self.story = TrackUsedBy_story()
-        self.battle = TrackUsedBy_battle()
-        self.other = TrackUsedBy_other()
+    def __init__(self):
+        self.data_background = OrderedDictWithCounter()
+        self.data_story = OrderedDictWithCounter()
+        self.data_battle = OrderedDictWithCounter()
+        self.data_ui = OrderedDictWithCounter()
 
-    def load(self, data):
-        super().load(data)
-        self.other.load_other(data["other"]["other"])
+    def register(self, file_loader: FileLoader):
+        filetype = file_loader.filetype
+        instance_id = file_loader.instance_id
+        if filetype in self.SUPPORTED_FILETYPE:
+            if filetype in FILETYPES_STORY:
+                if instance_id not in self.data_story.keys():
+                    self.data_story[instance_id] = file_loader
+            elif filetype in FILETYPES_BATTLE:
+                if instance_id not in self.data_battle.keys():
+                    self.data_battle[instance_id] = file_loader
+            elif filetype in FILETYPES_UI:
+                if instance_id not in self.data_ui.keys():
+                    self.data_ui[instance_id] = file_loader
+            elif filetype in FILETYPES_BACKGROUND:
+                if instance_id not in self.data_background.keys():
+                    self.data_background[instance_id] = file_loader
+        else:
+            raise ValueError
 
-    def to_json(self):
-        t = dict()
-        for i in self._components:
-            data = getattr(self, i).to_json()
-            t[i] = data[-1]
-        return t
+    def get_special_case_info(self):
+        is_story = True if len(self.data_story) != 0 else False
+        is_battle = True if len(self.data_battle) != 0 else False
 
-    def to_json_basic(self):
-        t = dict()
-        for i in self._components:
-            data = getattr(self, i).to_json_basic()
-            t[i] = data
-        return t
+        is_bond_memory = False
+        for i in self.data_story.values():
+            try:
+                if i.is_bond:
+                    is_bond_memory = True
+                    break
+            except Exception:
+                pass
+
+        is_event = False
+        for i in chain(self.data_story.keys(), self.data_battle.keys()):
+            if "EVENT" in i:
+                is_event = True
+                break
+
+        return {"is_story": is_story, "is_battle": is_battle,
+                "is_bond_memory": is_bond_memory, "is_event": is_event}
 
 
-class TrackSpecialCase(BaseDataModel):
+class TrackSpecialCase:
     _all = ["is_ost", "is_bond_memory", "is_story", "is_battle", "is_event"]
-    _counter = dict((key, []) for key in _all)
+    _counter = {key: [] for key in _all}
 
     def __init__(self, key_name):
-        super().__init__(key_name)
+        pass
 
     def load(self, data: dict, track_info):
-        super().load(data)
+        self.data = data
         for i, y in self.data.items():
             setattr(self, i, y)
             if y:
@@ -79,7 +106,7 @@ class TrackSpecialCase(BaseDataModel):
 class TrackName(BaseDataModel):
     def __init__(self, key_name):
         super().__init__(key_name)
-        self.known_as = MultipleLangStringModelList('known_as')
+        self.known_as = LangStringModelList('known_as')
 
     def load(self, data):
         super().load(data)
@@ -116,14 +143,17 @@ class TrackVersionListManager(BaseDataModelListManager):
 
 
 class TrackTags(BaseDataModel):
-    def __init__(self, key_name):
+    def __init__(self, key_name, track):
         super().__init__(key_name)
-        self.tags = MultipleLangStringModelList(key_name)
+        self.track = track
+        self.tags = LangStringModelList(key_name)
 
     def load(self, data):
         super().load(data)
         for i in data:
-            self.tags.append(constant_manager.query("tag", str(i)))
+            t = TagInfo.get_instance(instance_id=i.lower())
+            self.tags.append(t)
+            t.register(self.track)
 
     def to_json(self):
         return self.tags.to_json()
@@ -209,40 +239,28 @@ class Composer(BaseDataModel):
 
 # -------------------------------------------------------
 
-class TrackInfo:
+class TrackInfo(FileLoader, UsedByRegisterMixin):
     """大类，用于代表一个完整的歌曲JSON文件"""
     no = Integer("no")
     track_type = Integer("track_type")
     release_date = Timestamp("release_date")
     duration = Integer("duration")
-    file_type = Integer("file_type")
+    filetype = Integer("filetype")
     uuid = UUID("uuid")
     _instance = {}
-    _filetype_id_map = {"1": "OST", "2": "short",
-                        "3": "animation", "4": "other"}
+    _filetype_id_map = {"0": "OST", "1": "short",
+                        "2": "animation", "3": "other"}
 
-    def __new__(cls, *args, **kwargs):
-        try: data = args[0]
-        except Exception: data = kwargs["data"]
-
-        instance_id = "_".join([cls._filetype_id_map[str(data["file_type"])],
-                                str(data["no"])])
-        if instance_id in cls._instance.keys():
-            return cls._instance[instance_id]
-
-        new = super().__new__(cls)
-        cls._instance[instance_id] = new
-        return new
-
-    def __init__(self, data: dict):
-        self.data = data
+    def __init__(self, **kwargs):
+        super().__init__(data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])
+        data = kwargs["data"]
 
         # Regular information
         self.no = data["no"]
         self.track_type = data["track_type"]
         self.duration = data["duration"]
         self.release_date = data["release_date"]
-        self.file_type = data["file_type"]
+        self.filetype = data["filetype"]
         self.uuid = data["uuid"]
 
         # Song Description, using LangStringModel
@@ -257,7 +275,7 @@ class TrackInfo:
 
         # Other stuff
         self.composer = Composer().load(data["composer"])
-        self.tags = TrackTags('tags')
+        self.tags = TrackTags('tags', self)
         self.version = TrackVersionListManager('version')
         self.name = TrackName('name')
         self.used_by = TrackUsedBy()
@@ -265,7 +283,13 @@ class TrackInfo:
 
         # Load Data
         self.name.load(data["name"])
-        self.used_by.load(data["used_by"])
+        self.reference.load(data["reference"])
+
+    @staticmethod
+    def _get_instance_id(data: dict):
+        no = str(data["no"])
+        track_type = TrackInfo._filetype_id_map[str(data["track_type"])]
+        return "_".join([track_type, no])
 
     def to_json(self):
         t = {
@@ -281,11 +305,11 @@ class TrackInfo:
             "file_type": self.file_type,
 
             "composer": self.composer.to_json(),
-            "used_by": self.used_by.to_json(),
             "tags": self.tags.to_json(),
             "version": self.version.to_json(),
             "special_case": self.special_case.to_json(),
-            "reference": self.reference.to_json()
+            "reference": self.reference.to_json(),
+            "used_by": self.used_by.to_json()
         }
         return t
 
@@ -293,6 +317,8 @@ class TrackInfo:
         t = {
             "uuid": self.uuid,
             "no": self.no,
+            "track_type": self.track_type,
+            "instance_id": self.instance_id,
             "name": self.name.to_json_basic(),
             "desc": self.desc.to_json_basic(),
             "composer": self.composer.to_json_basic()
@@ -301,7 +327,7 @@ class TrackInfo:
 
     @classmethod
     def get_instance(cls, instance_id):
-        return cls._instance[instance_id]
+        return super().get_instance(instance_id)
 
 
 class TrackListManager(BaseDataModelListManager):
@@ -310,13 +336,13 @@ class TrackListManager(BaseDataModelListManager):
         self.track = []
 
     def load(self, data: list):
+        super().load(data)
         for i in data:
-            self.track.append(TrackInfo.get_instance(i))
+            self.track.append(TrackInfo.get_instance(instance_id=i))
 
     def to_json(self):
-        t = [i.to_json() for i in self.track]
+        t = [i.to_json_basic() for i in self.track]
         return t
 
     def to_json_basic(self):
-        t = [i.to_json_basic() for i in self.track]
-        return t
+        return self.to_json()

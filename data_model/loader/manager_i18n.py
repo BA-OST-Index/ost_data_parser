@@ -25,9 +25,11 @@ class SingleLanguageTranslation:
             # though "dict | dict" is possible above Python 3.9,
             # for maximum compatibility I decided to take a step back
             # and use "z = {**x, **y}" (above Python 3.5) instead.
-            with open(self.join_path(i), mode="r", encoding="UTF-8") as file:
-                content = json.load(file)
-            self.all_trans = {**self.all_trans, **content}
+            if os.path.isfile(self.join_path(i)):
+                # Skip folders (e.g. /data/i18n/xx/schale)
+                with open(self.join_path(i), mode="r", encoding="UTF-8") as file:
+                    content = json.load(file)
+                self.all_trans = {**self.all_trans, **content}
 
     def get(self, item):
         return self.all_trans.get(item, "")
@@ -65,7 +67,7 @@ class TranslationManager:
             m.load(temp)
         return m
 
-    def get(self, key):
+    def query(self, key):
         return self[key]
 
 

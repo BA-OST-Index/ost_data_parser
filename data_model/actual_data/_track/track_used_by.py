@@ -1,8 +1,8 @@
-import data_model._constant.file_type as FILE_TYPE
+import data_model.constant.file_type as FILE_TYPE
 from collections import OrderedDict
 from data_model.loader import i18n_translator
-from data_model.types.lang_string import MultipleLangStringModelList
-from data_model.types.metatype.basic import IToJsonMixin
+from data_model.types.lang_string import LangStringModelList
+from data_model.tool.to_json import ToJsonMixin
 
 
 __all__ = ["TrackUsedBy_story", "TrackUsedBy_battle", "TrackUsedBy_other"]
@@ -11,24 +11,10 @@ __all__ = ["TrackUsedBy_story", "TrackUsedBy_battle", "TrackUsedBy_other"]
 # ---------------------------------------------------------
 # TrackUsedBy
 
-class OrderedDictWithCounter:
-    def __init__(self):
-        self.ordered_dict = OrderedDict()
-        self.counter = dict()
-
-    def add(self, unique_id, data):
-        if unique_id in self.ordered_dict.keys():
-            self.counter[unique_id] += 1
-        else:
-            self.ordered_dict[unique_id] = data
-            self.counter[unique_id] = 1
-
-    def get_counter_with_data(self):
-        return OrderedDict((key, [value, self.counter[key]])
-                           for key, value in self.ordered_dict.items())
 
 
-class TrackUsedBy_ToJsonMixin(IToJsonMixin):
+
+class TrackUsedBy_ToJsonMixin(ToJsonMixin):
     def to_json(self):
         t = dict((key, []) for key in self._components)
         for key, value in t.items():
@@ -53,7 +39,7 @@ class TrackUsedBy_other(TrackUsedBy_ToJsonMixin):
     def __init__(self):
         self.key_name = "other"
         self.ui = OrderedDictWithCounter()
-        self.other = MultipleLangStringModelList('other')
+        self.other = LangStringModelList('other')
         self.video = OrderedDictWithCounter()
 
     def load_other(self, data: list):

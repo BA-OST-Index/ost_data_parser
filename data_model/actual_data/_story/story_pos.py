@@ -1,5 +1,6 @@
 import abc
-from data_model.types.metatype.basic import *
+from data_model.types.metatype.base_type import *
+from data_model.types.metatype.base_model import *
 
 __all__ = ["StoryPosBond", "StoryPosEvent", "StoryPosMainSideShortOther",
            "storyPosAuto"]
@@ -64,14 +65,12 @@ class StoryPosEvent(StoryPos):
 class StoryPosBond(StoryPos):
     student = String('student')
     no = Integer('no')
-    is_bond = Bool('is_bond')
     _components = ["student", "no"]
 
     def load(self, data):
         super().load(data)
         self.student = data["student"]
-        self.no = data["no"]
-        self.is_bond = data["is_bond"]
+        self.no = data["segment"]
 
 
 def storyPosAuto(data: dict, key_name: str = "pos"):

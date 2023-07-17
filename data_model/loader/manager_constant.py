@@ -20,21 +20,25 @@ class ConstantManager:
             with open(self.join_path(key), mode="r", encoding="UTF-8") as file:
                 temp = json.load(file)
                 id_ = temp["file_id"]
-                del temp["file_id"], temp["file_type"]
+                del temp["file_id"], temp["filetype"]
 
                 self.constant[id_] = temp
 
-    def query(self, constant_id: str, value: str or int = None):
-        if value is None:
-            return self.constant[constant_id]
-
-        # Is it a LangStringModel object?
+    def query(self, constant_id: str, value: str or int):
         result = self.constant[constant_id][str(value)]
-        t = LangStringModel()
-        t.load(result)
-        if not any([value for value in t.to_json()[1].values()]):
+        if "en" in result.keys():
+            # It's an LangStringModel object!
+            t = LangStringModel()
+            t.load(result)
+            return t
+        else:
+            # Maybe just a normal dict, like in `composer.json`
             return result
-        return t
+
+    def query_by_constant_file(self, constant_id: str):
+        constant_keys = self.constant[constant_id].keys()
+        d = {key: self.query(constant_id, key) for key in constant_keys}
+        return d
 
 
 constant_manager = ConstantManager(DATA_PATH_CONSTANT)

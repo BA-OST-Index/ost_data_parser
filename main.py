@@ -1,14 +1,9 @@
-import json
-import pprint
+from data_model.loader.loader_detect import get_loader_by_filepath
 
-from data_model.loader.track import TrackFolder
-from data_model.actual_data.story import StoryInfo
-
-t = TrackFolder(['track', 'ost'], 'data/track/ost/')
-
-with open("data/main/story/main/1/1/1.json", mode="r", encoding="UTF-8") as file:
-    content = json.load(file)
-
-story = StoryInfo(content)
-pprint.pp(story.to_json_basic())
-
+TAGS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\tag", None)
+TRACKS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\track", None)
+BACKGROUNDS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\background", None)
+CHARACTERS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\character", None)
+STORIES = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\main\story", None)
+BATTLES = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\main\battle", None)
+UIS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\ui", None)

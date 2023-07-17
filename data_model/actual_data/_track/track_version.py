@@ -1,5 +1,6 @@
-from data_model.types.metatype.basic import Bool, BaseDataModel, BaseDataModelList
-from data_model.types.url import UrlModel, MultipleUrlModelList
+from data_model.types.metatype.base_type import Bool
+from data_model.types.metatype.base_model import BaseDataModel, BaseDataModelList
+from data_model.types.url import UrlModel, UrlModelList
 from data_model.types.lang_string import LangStringModel
 from data_model.loader import constant_manager
 
@@ -15,7 +16,7 @@ class TrackVersion(BaseDataModel):
 
     def __init__(self):
         super().__init__(None)
-        self.url = MultipleUrlModelList('url')
+        self.url = UrlModelList('url')
         self.desc = LangStringModel()
 
     def load(self, data):
