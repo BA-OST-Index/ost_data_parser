@@ -11,6 +11,7 @@ class BackgroundUsedBy(BaseUsedBy, UsedByToJsonMixin):
     # I did not merge simply because they're not even the same one, after all.
     # And by that said they are possible to be changed in the future independently.
     SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_TRACK]
+    _components = ["data_story", "data_track"]
 
     def __init__(self):
         self.data_story = OrderedDictWithCounter()
@@ -63,7 +64,7 @@ class BackgroundInfo(FileLoader, UsedByRegisterMixin):
 
             "name": self.name.to_json_basic(),
             "desc": self.desc.to_json_basic(),
-            "used_by": self.desc.to_json()
+            "used_by": self.used_by.to_json_basic()
         }
 
     def to_json_basic(self):

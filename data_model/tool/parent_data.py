@@ -30,7 +30,7 @@ class ParentDataTool:
             current_dict["name"] = data.name.to_json()
             current_dict["desc"] = data.desc.to_json()
             current_dict["namespace"] = data.namespace
-            current_dict["path"] = data.path.get_path()
+            current_dict["path"] = data.path
             current_dict["extra_data"] = data.extra_data
             if data.last_parent:
                 current_dict["last_parent"] = {}
@@ -63,14 +63,16 @@ class ParentDataMixin(abc.ABC):
 
 
 class IParentData:
-    @abc.abstractmethod
-    def parent_data_to_json(self):
-        raise NotImplementedError
-
     @staticmethod
     def unpack_parents(data: ParentData, latest_fist: bool = True):
-        ParentDataTool.unpack_parents(data, latest_fist)
+        return ParentDataTool.unpack_parents(data, latest_fist)
 
     @staticmethod
     def export_parents_to_json(data: ParentData):
-        ParentDataTool.export_parents_to_json(data)
+        return ParentDataTool.export_parents_to_json(data)
+
+    def parent_data_to_json(self):
+        if self.parent_data is None:
+            return self.parent_data
+        else:
+            return self.export_parents_to_json(self.unpack_parents(self.parent_data, False)[0])

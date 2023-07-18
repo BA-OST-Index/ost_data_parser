@@ -36,8 +36,8 @@ class SingletonInstanceMixin(abc.ABC):
 class NamespacePathMixin(abc.ABC):
     def get_path(self, delimiter: str = "/", filename: bool = False):
         path = delimiter.join(self.namespace)
-        if not filename:
-            return path[:-5]
+        if filename:
+            return path + ".json"
         return path
 
 

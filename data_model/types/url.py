@@ -51,7 +51,7 @@ class UrlModelListManager(BaseDataModelListManager):
             self.url.append(t)
 
     def to_json(self):
-        return self.url.to_json()[-1]
+        return self.url.to_json()
 
     def to_json_basic(self):
-        return self.to_json()[-1]
+        return self.to_json()

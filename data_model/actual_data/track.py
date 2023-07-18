@@ -305,6 +305,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin):
         # Load Data
         self.name.load(data["name"])
         self.reference.load(data["reference"])
+        self.version.load(data["version"])
 
     @staticmethod
     def _get_instance_id(data: dict):
@@ -322,21 +323,21 @@ class TrackInfo(FileLoader, UsedByRegisterMixin):
         t = {
             "uuid": self.uuid,
 
-            "name": self.name.to_json(),
-            "desc": self.desc.to_json(),
+            "name": self.desc.to_json_basic(),
+            "desc": self.desc.to_json_basic(),
 
             "release_date": int(self.release_date.timestamp()),
             "no": self.no,
             "track_type": self.track_type,
             "duration": self.duration,
-            "file_type": self.file_type,
+            "file_type": self.filetype,
 
-            "composer": self.composer.to_json(),
-            "tags": self.tags.to_json(),
-            "version": self.version.to_json(),
-            "special_case": self.special_case.to_json(),
-            "reference": self.reference.to_json(),
-            "used_by": self.used_by.to_json()
+            "composer": self.composer.to_json_basic(),
+            "tags": self.tags.to_json_basic(),
+            "version": self.version.to_json_basic(),
+            "special_case": self.special_case.to_json_basic(),
+            "reference": self.reference.to_json_basic(),
+            "used_by": self.used_by.to_json_basic()
         }
         return t
 

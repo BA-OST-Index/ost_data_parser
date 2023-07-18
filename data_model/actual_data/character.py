@@ -7,6 +7,7 @@ from ..types.url import UrlModel
 
 class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
     SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT]
+    _components = ["data_story", "data_track"]
 
     def __init__(self):
         self.data_story = OrderedDictWithCounter()
@@ -65,7 +66,8 @@ class NpcInfo(CharacterInfo, UsedByRegisterMixin):
             "namespace": self.namespace,
             "name": self.name.to_json_basic(),
             "desc": self.name.to_json_basic(),
-            "image": self.image.to_json_basic()
+            "image": self.image.to_json_basic(),
+            "used_by": self.used_by.to_json_basic()
         }
         return d
 
@@ -134,7 +136,8 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
             },
             "club": self.club.to_json(),
             "age": self.age,
-            "hobby": self.hobby.to_json()
+            "hobby": self.hobby.to_json(),
+            "used_by": self.used_by.to_json_basic()
         }
 
     def to_json_basic(self):

@@ -103,9 +103,15 @@ class StoryInfoPartListManager(IToJson):
 
     def get_bgm_special(self):
         try:
-            return self.bgm_battle
-        except Exception:
+            if hasattr(self, "bgm_battle") and self.bgm_battle is not None:
+                return self.bgm_battle
+            else:
+                raise AttributeError
+        except AttributeError:
             try:
-                return self.bgm_memory
-            except Exception:
-                raise
+                if hasattr(self, "bgm_memory") and self.bgm_memory is not None:
+                    return self.bgm_memory
+                else:
+                    raise AttributeError
+            except AttributeError:
+                return None

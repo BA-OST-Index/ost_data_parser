@@ -149,9 +149,9 @@ class TotalAssaultInfo(BaseBattleInfo):
             "filetype": self.filetype,
 
             "name": self.name.to_json_basic(),
-            "name_ori": self.name_ori,
+            "name_ori": self.name_ori.to_json_basic(),
             "faction": self.faction.to_json_basic(),
-            "faction_ori": self.faction_ori.to_json_basic(),
+            "faction_ori": self.faction_ori,
 
             "profile": self.profile.to_json_basic(),
             "track": self.track.to_json_basic(),
@@ -286,3 +286,18 @@ class EventBattleInfo(MainBattleInfo):
     @staticmethod
     def _get_instance_id(data: dict):
         return "EVENT_" + "_".join([str(data["event_id"]), data["no"]])
+
+    def to_json(self):
+        return {
+            "uuid": self.uuid,
+            "filetype": self.filetype,
+            "name": self.name.to_json_basic(),
+            "event_id": self.event_id,
+            "no": self.no,
+            "is_hard": self.is_hard,
+            "is_normal": self.is_normal,
+            "is_sub": self.is_sub,
+            "track": self.track.to_json_basic(),
+
+            "parent_data": self.parent_data_to_json()
+        }

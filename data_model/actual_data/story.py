@@ -7,7 +7,7 @@ from data_model.loader import FileLoader
 from data_model.constant.file_type import FILE_STORY_MAIN, FILE_STORY_SIDE, FILE_STORY_SHORT, FILE_STORY_EVENT, \
     FILE_STORY_BOND, FILE_STORY_OTHER
 from ._story.story_part import StoryInfoPartListManager
-from ..tool.parent_data import IParentData
+from ..tool.parent_data import IParentData, ParentDataMixin
 
 
 class StoryInfo(FileLoader, IParentData):
@@ -67,19 +67,19 @@ class StoryInfo(FileLoader, IParentData):
             "uuid": self.uuid,
             "filetype": self.filetype,
 
-            "name": self.name.to_json()[-1],
-            "desc": [i[-1] for i in self.desc.to_json()[-1]],
-            "pos": self.pos.to_json()[-1],
+            "name": self.name.to_json_basic(),
+            "desc": [i for i in self.desc.to_json_basic()],
+            "pos": self.pos.to_json_basic(),
             "image": self.data["image"],
             "instance_id": self.instance_id,
 
             "part": self.part.to_json_basic(),
             "is_battle": self.is_battle,
-
-            "parent_data": self.parent_data_to_json()
         }
         if self.is_battle:
             t["bgm_battle"] = self.bgm_battle.to_json_basic()
+        if self.parent_data:
+            t["parent_data"] = self.parent_data_to_json()
         return t
 
     def to_json_basic(self):
@@ -95,6 +95,7 @@ class StoryInfoBond(StoryInfo):
 
     def __init__(self, **kwargs):
         self.data = data = kwargs["data"]
+        self.namespace = kwargs["namespace"]
         self.filetype = data["filetype"]
         self.uuid = data["uuid"]
         self.is_memory = data["is_memory"]
@@ -131,19 +132,21 @@ class StoryInfoBond(StoryInfo):
             "uuid": self.uuid,
             "filetype": self.filetype,
 
-            "name": self.name.to_json()[-1],
-            "desc": [i[-1] for i in self.desc.to_json()[-1]],
-            "pos": self.pos.to_json()[-1],
+            "name": self.name.to_json_basic(),
+            "desc": [i for i in self.desc.to_json_basic()],
+            "pos": self.pos.to_json_basic(),
             "image": self.data["image"],
             "instance_id": self.instance_id,
 
             "part": self.part.to_json_basic(),
-            "is_memory": self.is_memory,
-
-            "parent_data": self.parent_data_to_json()
+            "is_memory": self.is_memory
         }
         if self.is_memory:
             t["bgm_bond"] = self.bgm_memory.to_json_basic()
+        try:
+            t["parent_data"] = self.parent_data_to_json()
+        except AttributeError:
+            pass
         return t
 
     def to_json_basic(self):
