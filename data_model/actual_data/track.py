@@ -9,14 +9,15 @@ from data_model.loader.manager_constant import constant_manager
 from data_model.actual_data.used_by import BaseUsedBy, UsedByRegisterMixin, OrderedDictWithCounter, UsedByToJsonMixin
 from data_model.actual_data._track.track_version import *
 from data_model.constant.file_type import FILETYPES_STORY, FILETYPES_BATTLE, FILETYPES_UI, FILETYPES_BACKGROUND, \
-    FILE_VIDEO_INFO, FILETYPES_TRACK
+    FILE_VIDEO_INFO, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT
 from data_model.actual_data.tag import TagInfo
 
 __all__ = ["TrackInfo", "TrackListManager"]
 
 
 class TrackUsedBy(BaseUsedBy, UsedByToJsonMixin):
-    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_BATTLE, *FILETYPES_UI, *FILETYPES_BACKGROUND, FILE_VIDEO_INFO]
+    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_BATTLE, *FILETYPES_UI, *FILETYPES_BACKGROUND, FILE_VIDEO_INFO,
+                          FILE_STORY_EVENT, FILE_BATTLE_EVENT]
     _components = ["data_background", "data_story", "data_battle", "data_ui"]
 
     def __init__(self):

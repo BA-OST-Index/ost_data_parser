@@ -112,8 +112,9 @@ class FileLoader(BaseLoader, SingletonInstanceMixin, NamespacePathMixin, IToJson
         except Exception:
             self.parent_data = None
 
+    @staticmethod
     @abc.abstractmethod
-    def _get_instance_id(self):
+    def _get_instance_id(data):
         pass
 
     @abc.abstractmethod

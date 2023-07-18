@@ -262,3 +262,27 @@ class BountyHuntInfo(BaseBattleInfo):
     @classmethod
     def get_instance(cls, instance_id):
         return super().get_instance(instance_id)
+
+
+class EventBattleInfo(MainBattleInfo):
+    event_id = Integer('event_id')
+
+    def __init__(self, **kwargs):
+        FileLoader.__init__(self, data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])
+        data = kwargs["data"]
+
+        self.name = i18n_translator.query(data["name"])
+        self.event_id = data["event_id"]
+        self.no = data["no"]
+        self.is_hard = data["is_hard"]
+        self.is_normal = data["is_normal"]
+        self.is_sub = data["is_sub"]
+
+        self.track = TrackListManager()
+        self.track.load(data["track"])
+
+        self.extra_register()
+
+    @staticmethod
+    def _get_instance_id(data: dict):
+        return "EVENT_" + "_".join([str(data["event_id"]), data["no"]])

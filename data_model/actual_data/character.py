@@ -1,12 +1,12 @@
 from ..loader import FileLoader, schale_db_manager, i18n_translator
 from .used_by import BaseUsedBy, OrderedDictWithCounter, UsedByToJsonMixin, UsedByRegisterMixin
-from ..constant.file_type import FILETYPES_STORY, FILETYPES_TRACK
+from ..constant.file_type import FILETYPES_STORY, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT
 from ..types.metatype.base_model import BaseDataModelListManager
 from ..types.url import UrlModel
 
 
 class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
-    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_TRACK]
+    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT]
 
     def __init__(self):
         self.data_story = OrderedDictWithCounter()

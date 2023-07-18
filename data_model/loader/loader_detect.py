@@ -1,5 +1,3 @@
-# TODO: automatically detect suitable loaders using "State" design pattern!
-
 import abc
 import json
 import os.path
@@ -12,19 +10,23 @@ from ..constant.file_type import FILETYPES_TRACK, FILETYPES_TRACK_DIR, \
     FILETYPES_BATTLE, FILETYPES_BATTLE_DIR, \
     FILE_BATTLE_MAIN, FILE_BATTLE_EVENT, FILE_BATTLE_ARENA, FILE_BATTLE_TOTAL_ASSAULT, FILE_BATTLE_BOUNTY_HUNT, \
     FILE_BATTLE_SCHOOL_EXCHANGE, FILE_BATTLE_SPECIAL_COMMISSION, \
-    FILE_VIDEO_INFO, FILE_DIR_VIDEO_ALL
+    FILE_VIDEO_INFO, FILE_DIR_VIDEO_ALL, \
+    FILETYPES_EVENT_DIR, FILE_STORY_EVENT
 from ..actual_data.track import TrackInfo
 from .folder_loader import TrackFolder, TagFolder, CharacterLoader, BackgroundLoader, StoryLoader, UiLoader, \
-    BattleLoader, VideoLoader
+    BattleLoader, VideoLoader, EventLoader
 from ..actual_data.tag import TagInfo
 from ..actual_data.story import StoryInfoBond, StoryInfo
 from ..actual_data.background import BackgroundInfo
 from ..actual_data.character import NpcInfo
 from ..actual_data.ui import UiInfo
 from ..actual_data.battle import MainBattleInfo, SchoolExchangeInfo, TotalAssaultInfo, \
-    SpecialCommissionInfo, BountyHuntInfo
+    SpecialCommissionInfo, BountyHuntInfo, EventBattleInfo
 from ..actual_data.video import VideoInfo
 
+# This implementation of State design pattern is archived through `yield` and `yield from` expressions.
+# It is mostly to avoid the messy and long call stack shown in PyCharm's debugger.
+# A shoutout to Python Cookbook (3rd) and Fluent Python (2nd) as they all mentioned this special "yielding" feature.
 
 class BaseLoaderDetect(abc.ABC):
     next_detect = None
@@ -35,18 +37,32 @@ class BaseLoaderDetect(abc.ABC):
         raise NotImplementedError
 
 
-class VideoLoaderDetect(BaseLoaderDetect):
+class EventLoaderDetect(BaseLoaderDetect):
     next_detect = None
 
     @staticmethod
     def detect(entry):
+        if entry.filetype in FILETYPES_EVENT_DIR:
+            yield EventLoader(namespace=entry.namespace, json_data=entry.data,
+                              basepath=entry.filepath, parent_data=entry.parent_data)
+        elif entry.filetype == FILE_BATTLE_EVENT:
+            yield EventBattleInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+        elif entry.filetype == FILE_STORY_EVENT:
+            yield StoryInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+
+
+class VideoLoaderDetect(BaseLoaderDetect):
+    next_detect = EventLoaderDetect
+
+    @staticmethod
+    def detect(entry):
         if entry.filetype == FILE_VIDEO_INFO:
-            return VideoInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+            yield VideoInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
         elif entry.filetype == FILE_DIR_VIDEO_ALL:
-            return VideoLoader(namespace=entry.namespace, json_data=entry.data,
-                               basepath=entry.filepath, parent_data=entry.parent_data)
+            yield VideoLoader(namespace=entry.namespace, json_data=entry.data,
+                              basepath=entry.filepath, parent_data=entry.parent_data)
         else:
-            raise NotImplementedError
+            yield from VideoLoaderDetect.next_detect.detect(entry)
 
 
 class BattleLoaderDetect(BaseLoaderDetect):
@@ -55,23 +71,23 @@ class BattleLoaderDetect(BaseLoaderDetect):
     @staticmethod
     def detect(entry):
         if entry.filetype in FILETYPES_BATTLE_DIR:
-            return BattleLoader(namespace=entry.namespace, json_data=entry.data,
-                                basepath=entry.filepath, parent_data=entry.parent_data)
+            yield BattleLoader(namespace=entry.namespace, json_data=entry.data,
+                               basepath=entry.filepath, parent_data=entry.parent_data)
         elif entry.filetype in FILETYPES_BATTLE:
             if entry.filetype == FILE_BATTLE_MAIN:
-                return MainBattleInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+                yield MainBattleInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
             elif entry.filetype == FILE_BATTLE_TOTAL_ASSAULT:
-                return TotalAssaultInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+                yield TotalAssaultInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
             elif entry.filetype == FILE_BATTLE_BOUNTY_HUNT:
-                return BountyHuntInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+                yield BountyHuntInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
             elif entry.filetype == FILE_BATTLE_SCHOOL_EXCHANGE:
-                return SchoolExchangeInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+                yield SchoolExchangeInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
             elif entry.filetype == FILE_BATTLE_SPECIAL_COMMISSION:
-                return SpecialCommissionInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+                yield SpecialCommissionInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
             else:
                 raise NotImplementedError
         else:
-            return BattleLoaderDetect.next_detect.detect(entry)
+            yield from BattleLoaderDetect.next_detect.detect(entry)
 
 
 class UiLoaderDetect(BaseLoaderDetect):
@@ -80,12 +96,12 @@ class UiLoaderDetect(BaseLoaderDetect):
     @staticmethod
     def detect(entry):
         if entry.filetype in FILETYPES_UI:
-            return UiInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+            yield UiInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
         elif entry.filetype in FILETYPES_UI_DIR:
-            return UiLoader(namespace=entry.namespace, json_data=entry.data,
-                            basepath=entry.filepath, parent_data=entry.parent_data)
+            yield UiLoader(namespace=entry.namespace, json_data=entry.data,
+                           basepath=entry.filepath, parent_data=entry.parent_data)
         else:
-            return UiLoaderDetect.next_detect.detect(entry)
+            yield from UiLoaderDetect.next_detect.detect(entry)
 
 
 class StoryLoaderDetect(BaseLoaderDetect):
@@ -98,15 +114,15 @@ class StoryLoaderDetect(BaseLoaderDetect):
                 # just in case if something goes wrong
                 bond = StoryInfoBond(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
                 bond.after_instantiate()
-                return bond
+                yield bond
 
             # Normal
-            return StoryInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+            yield StoryInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
         elif entry.filetype in FILETYPES_STORY_DIR:
-            return StoryLoader(namespace=entry.namespace, json_data=entry.data,
-                               basepath=entry.filepath, parent_data=entry.parent_data)
+            yield StoryLoader(namespace=entry.namespace, json_data=entry.data,
+                              basepath=entry.filepath, parent_data=entry.parent_data)
         else:
-            return StoryLoaderDetect.next_detect.detect(entry)
+            yield from StoryLoaderDetect.next_detect.detect(entry)
 
 
 class BackgroundLoaderDetect(BaseLoaderDetect):
@@ -115,12 +131,12 @@ class BackgroundLoaderDetect(BaseLoaderDetect):
     @staticmethod
     def detect(entry):
         if entry.filetype == FILE_DIR_BACKGROUND_ALL:
-            return BackgroundLoader(namespace=entry.namespace, json_data=entry.data,
-                                    basepath=entry.filepath, parent_data=entry.parent_data)
+            yield BackgroundLoader(namespace=entry.namespace, json_data=entry.data,
+                                   basepath=entry.filepath, parent_data=entry.parent_data)
         elif entry.filetype == FILE_BACKGROUND_INFO:
-            return BackgroundInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+            yield BackgroundInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
         else:
-            return BackgroundLoaderDetect.next_detect.detect(entry)
+            yield from BackgroundLoaderDetect.next_detect.detect(entry)
 
 
 class CharacterLoaderDetect(BaseLoaderDetect):
@@ -130,16 +146,16 @@ class CharacterLoaderDetect(BaseLoaderDetect):
     def detect(entry):
         if entry.filetype in [FILE_DIR_CHARACTER_ALL, FILE_DIR_CHARACTER_CATEGORY, FILE_DIR_STUDENT_SINGLE,
                               FILE_DIR_STUDENT_BOND]:
-            return CharacterLoader(namespace=entry.namespace, json_data=entry.data,
-                                   basepath=entry.filepath, parent_data=entry.parent_data)
+            yield CharacterLoader(namespace=entry.namespace, json_data=entry.data,
+                                  basepath=entry.filepath, parent_data=entry.parent_data)
         elif entry.filetype == FILE_STORY_BOND:
             bond = StoryInfoBond(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
             bond.after_instantiate()
-            return bond
+            yield bond
         elif entry.filetype == FILE_CHARACTER_INFO:
-            return NpcInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+            yield NpcInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
         else:
-            return CharacterLoaderDetect.next_detect.detect(entry)
+            yield from CharacterLoaderDetect.next_detect.detect(entry)
 
 
 class TagLoaderDetect(BaseLoaderDetect):
@@ -148,12 +164,12 @@ class TagLoaderDetect(BaseLoaderDetect):
     @staticmethod
     def detect(entry):
         if entry.filetype == FILE_TAG_INFO:
-            return TagInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+            yield TagInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
         elif entry.filetype == FILE_DIR_TAG_ALL:
-            return TagFolder(namespace=entry.namespace, json_data=entry.data,
-                             basepath=entry.filepath, parent_data=entry.parent_data)
+            yield TagFolder(namespace=entry.namespace, json_data=entry.data,
+                            basepath=entry.filepath, parent_data=entry.parent_data)
         else:
-            return TagLoaderDetect.next_detect.detect(entry)
+            yield from TagLoaderDetect.next_detect.detect(entry)
 
 
 class TrackLoaderDetect(BaseLoaderDetect):
@@ -162,12 +178,12 @@ class TrackLoaderDetect(BaseLoaderDetect):
     @staticmethod
     def detect(entry):
         if entry.filetype in FILETYPES_TRACK:
-            return TrackInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+            yield TrackInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
         elif entry.filetype in FILETYPES_TRACK_DIR:
-            return TrackFolder(namespace=entry.namespace, json_data=entry.data,
-                               basepath=entry.filepath, parent_data=entry.parent_data)
+            yield TrackFolder(namespace=entry.namespace, json_data=entry.data,
+                              basepath=entry.filepath, parent_data=entry.parent_data)
         else:
-            return TrackLoaderDetect.next_detect.detect(entry)
+            yield from TrackLoaderDetect.next_detect.detect(entry)
 
 
 class LoaderDetectEntry:
@@ -188,8 +204,8 @@ class LoaderDetectEntry:
             return json.load(file)
 
     def detect(self):
-        return TrackLoaderDetect.detect(self)
+        yield from TrackLoaderDetect.detect(self)
 
 
 def get_loader_by_filepath(namespace: list, filepath: str, parent_data):
-    return LoaderDetectEntry(namespace, filepath, parent_data).detect()
+    return next(LoaderDetectEntry(namespace, filepath, parent_data).detect())

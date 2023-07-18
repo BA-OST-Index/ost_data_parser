@@ -10,4 +10,4 @@ STORIES = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\main\
 BATTLES = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\main\battle", None)
 UIS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\ui", None)
 VIDEOS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\video", None)
-pprint.pp(VIDEOS.including[0].loader.to_json())
+EVENTS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\event", None)
