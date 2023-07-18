@@ -14,7 +14,7 @@ class BaseUsedBy(abc.ABC, IToJson):
         raise NotImplementedError
 
 
-class UsedByRegisterMixin(abc.ABC):
+class UsedByRegisterMixin:
     def register(self, file_loader: FileLoader):
         self.used_by.register(file_loader)
 

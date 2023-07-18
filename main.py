@@ -1,3 +1,5 @@
+import pprint
+
 from data_model.loader.loader_detect import get_loader_by_filepath
 
 TAGS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\tag", None)
@@ -7,3 +9,5 @@ CHARACTERS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\ch
 STORIES = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\main\story", None)
 BATTLES = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\main\battle", None)
 UIS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\ui", None)
+VIDEOS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\video", None)
+pprint.pp(VIDEOS.including[0].loader.to_json())

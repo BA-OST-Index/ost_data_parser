@@ -1,7 +1,6 @@
 from data_model.types.metatype.base_type import *
 from data_model.types.metatype.complex import *
 from data_model.actual_data._story.story_pos import *
-from data_model.tool.to_json import IToJson
 from data_model.loader import i18n_translator
 from data_model.types.lang_string import LangStringModelList
 from data_model.loader import FileLoader
@@ -11,7 +10,7 @@ from ._story.story_part import StoryInfoPartListManager
 from ..tool.parent_data import IParentData
 
 
-class StoryInfo(FileLoader, IToJson, IParentData):
+class StoryInfo(FileLoader, IParentData):
     uuid = UUID('uuid')
     filetype = Integer('filetype')
     is_battle = Bool('is_battle')

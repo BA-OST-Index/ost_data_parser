@@ -11,10 +11,11 @@ from ..constant.file_type import FILETYPES_TRACK, FILETYPES_TRACK_DIR, \
     FILETYPES_UI, FILETYPES_UI_DIR, \
     FILETYPES_BATTLE, FILETYPES_BATTLE_DIR, \
     FILE_BATTLE_MAIN, FILE_BATTLE_EVENT, FILE_BATTLE_ARENA, FILE_BATTLE_TOTAL_ASSAULT, FILE_BATTLE_BOUNTY_HUNT, \
-    FILE_BATTLE_SCHOOL_EXCHANGE, FILE_BATTLE_SPECIAL_COMMISSION
+    FILE_BATTLE_SCHOOL_EXCHANGE, FILE_BATTLE_SPECIAL_COMMISSION, \
+    FILE_VIDEO_INFO, FILE_DIR_VIDEO_ALL
 from ..actual_data.track import TrackInfo
 from .folder_loader import TrackFolder, TagFolder, CharacterLoader, BackgroundLoader, StoryLoader, UiLoader, \
-    BattleLoader
+    BattleLoader, VideoLoader
 from ..actual_data.tag import TagInfo
 from ..actual_data.story import StoryInfoBond, StoryInfo
 from ..actual_data.background import BackgroundInfo
@@ -22,6 +23,7 @@ from ..actual_data.character import NpcInfo
 from ..actual_data.ui import UiInfo
 from ..actual_data.battle import MainBattleInfo, SchoolExchangeInfo, TotalAssaultInfo, \
     SpecialCommissionInfo, BountyHuntInfo
+from ..actual_data.video import VideoInfo
 
 
 class BaseLoaderDetect(abc.ABC):
@@ -33,8 +35,22 @@ class BaseLoaderDetect(abc.ABC):
         raise NotImplementedError
 
 
-class BattleLoaderDetect(BaseLoaderDetect):
+class VideoLoaderDetect(BaseLoaderDetect):
     next_detect = None
+
+    @staticmethod
+    def detect(entry):
+        if entry.filetype == FILE_VIDEO_INFO:
+            return VideoInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+        elif entry.filetype == FILE_DIR_VIDEO_ALL:
+            return VideoLoader(namespace=entry.namespace, json_data=entry.data,
+                               basepath=entry.filepath, parent_data=entry.parent_data)
+        else:
+            raise NotImplementedError
+
+
+class BattleLoaderDetect(BaseLoaderDetect):
+    next_detect = VideoLoaderDetect
 
     @staticmethod
     def detect(entry):
@@ -55,7 +71,8 @@ class BattleLoaderDetect(BaseLoaderDetect):
             else:
                 raise NotImplementedError
         else:
-            raise NotImplementedError
+            return BattleLoaderDetect.next_detect.detect(entry)
+
 
 class UiLoaderDetect(BaseLoaderDetect):
     next_detect = BattleLoaderDetect
@@ -67,6 +84,8 @@ class UiLoaderDetect(BaseLoaderDetect):
         elif entry.filetype in FILETYPES_UI_DIR:
             return UiLoader(namespace=entry.namespace, json_data=entry.data,
                             basepath=entry.filepath, parent_data=entry.parent_data)
+        else:
+            return UiLoaderDetect.next_detect.detect(entry)
 
 
 class StoryLoaderDetect(BaseLoaderDetect):

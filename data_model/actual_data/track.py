@@ -8,14 +8,15 @@ from data_model.loader import i18n_translator, FileLoader
 from data_model.loader.manager_constant import constant_manager
 from data_model.actual_data.used_by import BaseUsedBy, UsedByRegisterMixin, OrderedDictWithCounter, UsedByToJsonMixin
 from data_model.actual_data._track.track_version import *
-from data_model.constant.file_type import FILETYPES_STORY, FILETYPES_BATTLE, FILETYPES_UI, FILETYPES_BACKGROUND
+from data_model.constant.file_type import FILETYPES_STORY, FILETYPES_BATTLE, FILETYPES_UI, FILETYPES_BACKGROUND, \
+    FILE_VIDEO_INFO, FILETYPES_TRACK
 from data_model.actual_data.tag import TagInfo
 
 __all__ = ["TrackInfo", "TrackListManager"]
 
 
 class TrackUsedBy(BaseUsedBy, UsedByToJsonMixin):
-    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_BATTLE, *FILETYPES_UI, *FILETYPES_BACKGROUND]
+    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_BATTLE, *FILETYPES_UI, *FILETYPES_BACKGROUND, FILE_VIDEO_INFO]
     _components = ["data_background", "data_story", "data_battle", "data_ui"]
 
     def __init__(self):
@@ -23,6 +24,7 @@ class TrackUsedBy(BaseUsedBy, UsedByToJsonMixin):
         self.data_story = OrderedDictWithCounter()
         self.data_battle = OrderedDictWithCounter()
         self.data_ui = OrderedDictWithCounter()
+        self.data_video = OrderedDictWithCounter()
 
     def register(self, file_loader: FileLoader):
         filetype = file_loader.filetype
@@ -40,6 +42,9 @@ class TrackUsedBy(BaseUsedBy, UsedByToJsonMixin):
             elif filetype in FILETYPES_BACKGROUND:
                 if instance_id not in self.data_background.keys():
                     self.data_background[instance_id] = file_loader
+            elif filetype == FILE_VIDEO_INFO:
+                if instance_id not in self.data_video.keys():
+                    self.data_video[instance_id] = file_loader
         else:
             raise ValueError
 
@@ -64,6 +69,24 @@ class TrackUsedBy(BaseUsedBy, UsedByToJsonMixin):
 
         return {"is_story": is_story, "is_battle": is_battle,
                 "is_bond_memory": is_bond_memory, "is_event": is_event}
+
+
+class ComposerUsedBy(BaseUsedBy, UsedByToJsonMixin):
+    SUPPORTED_FILETYPE = [*FILETYPES_TRACK]
+    _components = ["data_track"]
+
+    def __init__(self):
+        self.data_track = OrderedDictWithCounter()
+
+    def register(self, file_loader: FileLoader):
+        filetype = file_loader.filetype
+        instance_id = file_loader.instance_id
+        if filetype in self.SUPPORTED_FILETYPE:
+            if filetype in FILETYPES_TRACK:
+                if instance_id not in self.data_track.keys():
+                    self.data_track[instance_id] = file_loader
+        else:
+            raise ValueError
 
 
 class TrackSpecialCase:
@@ -186,7 +209,7 @@ class Contact(BaseDataModel):
         return self.to_json()
 
 
-class Composer(BaseDataModel):
+class Composer(BaseDataModel, UsedByRegisterMixin):
     """
     Defines a `composer` dict.
 
@@ -202,14 +225,10 @@ class Composer(BaseDataModel):
     def __init__(self, key_name="composer"):
         super().__init__(key_name)
         self.contact = Contact()
+        self.used_by = ComposerUsedBy()
 
     def load(self, value: dict):
         self.composer_id = str(value.get("composer_id", ""))
-        nickname = str(value.get("nickname", ""))
-
-        # Implementing Singleton
-        if nickname in self._instance.keys():
-            return self._instance["nickname"]
         if self.composer_id in self._instance.keys():
             return self._instance[self.composer_id]
 
@@ -223,13 +242,16 @@ class Composer(BaseDataModel):
         self.nickname = value["nickname"]
         self.contact.load(value["contact"])
 
+        self._instance[self.composer_id] = self
+
         return self
 
     def to_json(self):
         return {"composer_id": self.composer_id,
                 "realname": self.realname,
                 "nickname": self.nickname,
-                "contact": self.contact.to_json()}
+                "contact": self.contact.to_json_basic(),
+                "used_by": self.used_by.to_json_basic()}
 
     def to_json_basic(self):
         return {"composer_id": self.composer_id,
@@ -269,12 +291,10 @@ class TrackInfo(FileLoader, UsedByRegisterMixin):
         # Special Case Usage
         # DO NOT load the data until all the relations data being imported!
         self.special_case = TrackSpecialCase('special_case')
-        # TODO: for temporary development needs. This should be removed and generated
-        #   from known relations (e.g. by accessing `TrackUsedBy`).
-        self.special_case.load(data["special_case"], self)
 
         # Other stuff
         self.composer = Composer().load(data["composer"])
+        self.composer.register(self)
         self.tags = TrackTags('tags', self)
         self.version = TrackVersionListManager('version')
         self.name = TrackName('name')
@@ -291,7 +311,13 @@ class TrackInfo(FileLoader, UsedByRegisterMixin):
         track_type = TrackInfo._filetype_id_map[str(data["track_type"])]
         return "_".join([track_type, no])
 
+    def load_special_case(self):
+        t = self.used_by.get_special_case_info()
+        t["is_ost"] = True if self.track_type == 0 else False
+        self.special_case.load(t, self)
+
     def to_json(self):
+        self.load_special_case()
         t = {
             "uuid": self.uuid,
 
@@ -314,6 +340,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin):
         return t
 
     def to_json_basic(self):
+        self.load_special_case()
         t = {
             "uuid": self.uuid,
             "no": self.no,

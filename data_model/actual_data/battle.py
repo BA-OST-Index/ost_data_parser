@@ -127,8 +127,8 @@ class TotalAssaultInfo(BaseBattleInfo):
         self.image.load(data["image"])
         self.track = TrackInfo.get_instance(instance_id=data["track"])
 
-        self.faction_ori = schale_db_manager.query("raids", data["name"], "Faction")
-        self.faction = schale_db_manager.query("localization", "BossFaction" + self.faction_ori)
+        self.faction_ori = schale_db_manager.query_constant("raids", data["name"], "Faction")
+        self.faction = schale_db_manager.query("localization", "BossFaction_" + self.faction_ori)
 
         self.name_ori = schale_db_manager.query("raids", data["name"], "PathName")
         self.name = schale_db_manager.query("raids", data["name"], "Name")

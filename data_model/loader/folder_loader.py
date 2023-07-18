@@ -101,6 +101,7 @@ class BackgroundLoader(FolderLoader):
     def to_json_basic(self):
         return self.to_json()
 
+
 class StoryLoader(FolderLoader):
     def __init__(self, namespace: list, basepath, json_data=None, parent_data=None):
         super().__init__(namespace, basepath, json_data, parent_data)
@@ -121,6 +122,7 @@ class StoryLoader(FolderLoader):
 
     def to_json_basic(self):
         return self.to_json()
+
 
 class UiLoader(FolderLoader):
     def __init__(self, namespace: list, basepath, json_data=None, parent_data=None):
@@ -143,7 +145,30 @@ class UiLoader(FolderLoader):
     def to_json_basic(self):
         return self.to_json()
 
+
 class BattleLoader(FolderLoader):
+    def __init__(self, namespace: list, basepath, json_data=None, parent_data=None):
+        super().__init__(namespace, basepath, json_data, parent_data)
+
+    def to_json(self):
+        d = {
+            "uuid": self.uuid,
+            "filetype": self.filetype,
+            "name": self.name.to_json_basic(),
+            "desc": self.desc.to_json_basic(),
+            "namespace": self.namespace,
+
+            "include": [[i.name, i.loader.to_json_basic()] for i in self.including]
+        }
+        if self.parent_data_export:
+            d["parent_data"] = self.export_parents_to_json()
+        return d
+
+    def to_json_basic(self):
+        return self.to_json()
+
+
+class VideoLoader(FolderLoader):
     def __init__(self, namespace: list, basepath, json_data=None, parent_data=None):
         super().__init__(namespace, basepath, json_data, parent_data)
 
