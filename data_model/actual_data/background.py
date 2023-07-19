@@ -64,6 +64,8 @@ class BackgroundInfo(FileLoader, UsedByRegisterMixin):
 
             "name": self.name.to_json_basic(),
             "desc": self.desc.to_json_basic(),
+            "tag": self.tag.to_json_basic(),
+            "image": self.image.to_json_basic(),
             "used_by": self.used_by.to_json_basic()
         }
 
