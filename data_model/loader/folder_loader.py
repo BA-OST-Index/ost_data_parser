@@ -25,7 +25,23 @@ class GenericFolder(FolderLoader):
         return d
 
     def to_json_basic(self):
-        return self.to_json()
+        d = {
+            "uuid": self.uuid,
+            "filetype": self.filetype,
+            "name": self.name.to_json_basic(),
+            "desc": self.desc.to_json_basic(),
+            "namespace": self.namespace,
+
+            "include": []
+        }
+        for i in self.including:
+            if i.loader.filetype > 0:
+                continue
+            d["include"].append([i.name, i.loader.to_json_basic()])
+
+        if self.parent_data_exist and self.parent_data_export:
+            d["parent_data"] = self.export_parents_to_json()
+        return d
 
 
 class TrackFolder(GenericFolder):

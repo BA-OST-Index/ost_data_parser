@@ -301,3 +301,14 @@ class EventBattleInfo(MainBattleInfo):
 
             "parent_data": self.parent_data_to_json()
         }
+    def to_json_basic(self):
+        return {
+            "uuid": self.uuid,
+            "filetype": self.filetype,
+            "name": self.name.to_json_basic(),
+            "event_id": self.event_id,
+            "no": self.no,
+            "is_hard": self.is_hard,
+            "is_normal": self.is_normal,
+            "is_sub": self.is_sub,
+        }
