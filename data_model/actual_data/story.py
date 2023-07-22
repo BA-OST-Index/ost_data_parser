@@ -7,10 +7,11 @@ from data_model.loader import FileLoader
 from data_model.constant.file_type import FILE_STORY_MAIN, FILE_STORY_SIDE, FILE_STORY_SHORT, FILE_STORY_EVENT, \
     FILE_STORY_BOND, FILE_STORY_OTHER
 from ._story.story_part import StoryInfoPartListManager
-from ..tool.parent_data import IParentData, ParentDataMixin
+from ..tool.parent_data import IParentData
+from ..tool.interpage import InterpageMixin
 
 
-class StoryInfo(FileLoader, IParentData):
+class StoryInfo(FileLoader, IParentData, InterpageMixin):
     uuid = UUID('uuid')
     filetype = Integer('filetype')
     is_battle = Bool('is_battle')
@@ -88,6 +89,41 @@ class StoryInfo(FileLoader, IParentData):
     @classmethod
     def get_instance(cls, instance_id):
         return super().get_instance(instance_id)
+
+    def _get_instance_offset(self, offset: int):
+        pos = self.instance_id.split("_")
+
+        # event/bond story
+        if len(pos) == 3:
+            segment_id = int(pos[-1]) + offset
+            try:
+                return self._instance["_".join([*pos[:-1], str(segment_id)])]
+            except KeyError:
+                return None
+
+        # main/other/short story
+        chapter_id, segment_id = int(pos[-2]), int(pos[-1])
+        try:
+            return self._instance["_".join([pos[:-2], str(chapter_id), str(segment_id + offset)])]
+        except KeyError:
+            pass
+        # if it's the end of the chapter
+        if offset > 0:
+            try:
+                return self._instance["_".join([pos[:-2], str(chapter_id + 1), "1"])]
+            except KeyError:
+                return None
+        # if it's the beginning of the chapter
+        if offset < 0:
+            # we'll have to figure out where it ends
+            # because different chapters in different volumes can have varied numbers of segments
+            for i in range(40, 19, -1):
+                try:
+                    return self._instance["_".join([pos[:-2], str(chapter_id - 1), str(i)])]
+                except KeyError:
+                    pass
+            # i guess i have no idea what to do
+            return None
 
 
 class StoryInfoBond(StoryInfo):

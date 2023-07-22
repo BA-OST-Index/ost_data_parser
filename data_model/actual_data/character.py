@@ -3,6 +3,7 @@ from .used_by import BaseUsedBy, OrderedDictWithCounter, UsedByToJsonMixin, Used
 from ..constant.file_type import FILETYPES_STORY, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT
 from ..types.metatype.base_model import BaseDataModelListManager
 from ..types.url import UrlModel
+from ..tool.interpage import InterpageMixin
 
 
 class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
@@ -27,7 +28,7 @@ class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
             raise ValueError
 
 
-class CharacterInfo(FileLoader):
+class CharacterInfo(FileLoader, InterpageMixin):
     _instance = {}
 
     @classmethod
@@ -46,6 +47,22 @@ class CharacterInfo(FileLoader):
                 return temp
         else:
             return temp
+
+    def _get_instance_offset(self, offset: int):
+        keys = list(self._instance.keys())
+        curr_index = keys.index(self.instance_id)
+
+        try:
+            if curr_index == 0 and offset < 0:
+                raise ValueError
+            target = self._instance[keys[curr_index + offset]]
+        except (ValueError, IndexError):
+            return None
+
+        if target.instance_id.split("_")[0] != self.instance_id.split("_")[0]:
+            # Do not inter-index NPCs and Students!
+            return None
+        return target
 
 
 class NpcInfo(CharacterInfo, UsedByRegisterMixin):
@@ -67,7 +84,8 @@ class NpcInfo(CharacterInfo, UsedByRegisterMixin):
             "name": self.name.to_json_basic(),
             "desc": self.name.to_json_basic(),
             "image": self.image.to_json_basic(),
-            "used_by": self.used_by.to_json_basic()
+            "used_by": self.used_by.to_json_basic(),
+            "interpage": self.get_interpage_data()
         }
         return d
 
@@ -81,6 +99,7 @@ class NpcInfo(CharacterInfo, UsedByRegisterMixin):
     @classmethod
     def get_instance(cls, instance_id):
         return super().get_instance(instance_id)
+
 
 
 class StudentInfo(CharacterInfo, UsedByRegisterMixin):
@@ -137,7 +156,8 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
             "club": self.club.to_json(),
             "age": self.age,
             "hobby": self.hobby.to_json(),
-            "used_by": self.used_by.to_json_basic()
+            "used_by": self.used_by.to_json_basic(),
+            "interpage": self.get_interpage_data()
         }
 
     def to_json_basic(self):
@@ -149,7 +169,8 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
             "school": self.school_long.to_json_basic(),
             "club": self.club.to_json_basic(),
             "age": self.age.to_json_basic(),
-            "hobby": self.hobby.to_json_basic()
+            "hobby": self.hobby.to_json_basic(),
+            "interpage": self.get_interpage_data()
         }
 
     @classmethod

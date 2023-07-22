@@ -94,7 +94,7 @@ write_loader2(BATTLES)
 for battle_type in BATTLES.including:
     write_loader2(battle_type.loader)
     # for main
-    if battle_type.loader.namespace == "main":
+    if battle_type.loader.namespace[-1] == "main":
         for chapter in battle_type.loader.including:
             write_loader2(chapter.loader)
             for segment in chapter.loader.including:

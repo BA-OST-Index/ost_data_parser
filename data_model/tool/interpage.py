@@ -2,16 +2,16 @@ import abc
 from data_model.tool.tool import SingletonInstanceMixin
 
 
-class InterpageMixin(abc.ABC, SingletonInstanceMixin):
+class InterpageMixin(SingletonInstanceMixin):
     def get_mixed_interpage_data(self, prev, next):
         return {
             "prev": {
-                "name": prev.name.to_json() if prev else "[NO_PREV]",
+                "name": prev.name.to_json_basic() if prev else "[NO_PREV]",
                 "namespace": prev.namespace if prev else "[NO_PREV]"
             },
             "next": {
-                "name": next.name.to_json() if next else "[NO_NEXT]",
-                "namespace": next.namespace if next else "[NP_NEXT]"
+                "name": next.name.to_json_basic() if next else "[NO_NEXT]",
+                "namespace": next.namespace if next else "[NO_NEXT]"
             }
         }
 

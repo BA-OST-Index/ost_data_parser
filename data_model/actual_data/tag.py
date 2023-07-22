@@ -3,6 +3,7 @@ from ..loader import FileLoader, i18n_translator
 from ..types.metatype.base_model import BaseDataModelListManager
 from .used_by import BaseUsedBy, UsedByRegisterMixin, OrderedDictWithCounter, UsedByToJsonMixin
 from ..constant.file_type import FILETYPES_TRACK, FILETYPES_BACKGROUND
+from ..tool.interpage import InterpageMixin
 
 
 class TagUsedBy(BaseUsedBy, UsedByToJsonMixin):
@@ -27,7 +28,7 @@ class TagUsedBy(BaseUsedBy, UsedByToJsonMixin):
             raise ValueError
 
 
-class TagInfo(FileLoader, UsedByRegisterMixin):
+class TagInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
     _color_to_css = {"green": "text-bg-success", "blue": "text-bg-primary",
                      "red": "text-bg-danger", "yellow": "text-bg-warning",
                      "grey": "text-bg-secondary"}
@@ -60,7 +61,8 @@ class TagInfo(FileLoader, UsedByRegisterMixin):
             "desc": self.desc.to_json(),
             "color": self.color,
             "color_css": self.color_css,
-            "used_by": self.used_by.to_json()
+            "used_by": self.used_by.to_json(),
+            "interpage": self.get_interpage_data()
         }
         return d
 
@@ -73,9 +75,20 @@ class TagInfo(FileLoader, UsedByRegisterMixin):
             "desc": self.desc.to_json(),
             "color": self.color,
             "color_css": self.color_css,
-            "used_by": self.used_by.to_json_basic()
+            "interpage": self.get_interpage_data()
         }
         return d
+
+    def _get_instance_offset(self, offset: int):
+        keys = list(self._instance.keys())
+        curr_index = keys.index(self.instance_id)
+
+        try:
+            if curr_index == 0 and offset < 0:
+                return None
+            return self._instance[keys[curr_index + offset]]
+        except (IndexError, KeyError):
+            return None
 
 
 class TagListManager(BaseDataModelListManager):

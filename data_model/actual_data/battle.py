@@ -3,6 +3,7 @@ from ..types.metatype.base_type import Integer, String, Bool
 from ..types.url import UrlModel
 from .track import TrackListManager, TrackInfo
 from ..tool.parent_data import IParentData
+from ..tool.interpage import InterpageMixin
 
 
 class BaseBattleInfo(FileLoader, IParentData):
@@ -16,10 +17,10 @@ class BaseBattleInfo(FileLoader, IParentData):
 
     @classmethod
     def get_instance(cls, instance_id):
-        return super().get_instance(instance_id)
+        return cls._instance[instance_id]
 
 
-class MainBattleInfo(BaseBattleInfo):
+class MainBattleInfo(BaseBattleInfo, InterpageMixin):
     chapter = Integer('chapter')
     no = String('no')
     is_hard = Bool('is_hard')
@@ -61,6 +62,7 @@ class MainBattleInfo(BaseBattleInfo):
             "is_normal": self.is_normal,
             "is_sub": self.is_sub,
             "track": self.track.to_json_basic(),
+            "interpage": self.get_interpage_data(),
 
             "parent_data": self.parent_data_to_json()
         }
@@ -75,11 +77,43 @@ class MainBattleInfo(BaseBattleInfo):
             "is_hard": self.is_hard,
             "is_normal": self.is_normal,
             "is_sub": self.is_sub,
+            "interpage": self.get_interpage_data(),
         }
 
     @classmethod
     def get_instance(cls, instance_id):
         return super().get_instance(instance_id)
+
+    def _get_instance_offset(self, offset: int):
+        INSTANCE_ID_FORMAT = f"MAIN_{self.chapter}_"
+
+        temp = list(self.no)
+        mission_type, stage_no, sub_no = temp[0], temp[1], temp[2]
+
+        # sub_no
+        try:
+            ins_id = INSTANCE_ID_FORMAT + "".join([mission_type, stage_no,
+                                                   str(int(sub_no) + offset)])
+            return self._instance[ins_id]
+        except KeyError:
+            pass
+
+        # stage_no
+        try:
+            ins_id = INSTANCE_ID_FORMAT + "".join([mission_type,
+                                                   str(int(stage_no) + offset),
+                                                   "0"])
+            return self._instance[ins_id]
+        except KeyError:
+            pass
+
+        # mission_type
+        if mission_type == "N":
+            try:
+                ins_id = INSTANCE_ID_FORMAT + "".join(["H", "1", "0"])
+                return self._instance[ins_id]
+            except KeyError:
+                return None
 
 
 class SchoolExchangeInfo(BaseBattleInfo):
@@ -298,9 +332,11 @@ class EventBattleInfo(MainBattleInfo):
             "is_normal": self.is_normal,
             "is_sub": self.is_sub,
             "track": self.track.to_json_basic(),
+            "interpage": self.get_interpage_data(),
 
             "parent_data": self.parent_data_to_json()
         }
+
     def to_json_basic(self):
         return {
             "uuid": self.uuid,
@@ -311,4 +347,39 @@ class EventBattleInfo(MainBattleInfo):
             "is_hard": self.is_hard,
             "is_normal": self.is_normal,
             "is_sub": self.is_sub,
+            "interpage": self.get_interpage_data()
         }
+
+    def _get_instance_offset(self, offset: int):
+        INSTANCE_ID_FORMAT = f"EVENT_{self.event_id}_"
+
+        temp = list(self.no)
+        temp = [temp[0], "".join(temp[1:])]
+
+        # stage no
+        try:
+            ins_id = int(temp[1]) + offset
+            return self._instance[INSTANCE_ID_FORMAT + "".join([str(temp[0]) + str(ins_id)])]
+        except KeyError:
+            if offset < 0:
+                if temp[0] == "N":
+                    return None
+
+                for i in range(15, 0, -1):
+                    try:
+                        return self._instance[INSTANCE_ID_FORMAT + "N" + str(i)]
+                    except KeyError:
+                        pass
+                return None
+
+            if offset > 0:
+                if temp[0] == "H":
+                    return None
+
+                # then probably it's the end of normal missions
+                # let's switch to hard ones!
+                try:
+                    return self._instance[INSTANCE_ID_FORMAT + "H1"]
+                except KeyError:
+                    # still no? well i guess the data is just broken
+                    return None

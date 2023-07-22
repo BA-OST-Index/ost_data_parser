@@ -11,6 +11,8 @@ from data_model.actual_data._track.track_version import *
 from data_model.constant.file_type import FILETYPES_STORY, FILETYPES_BATTLE, FILETYPES_UI, FILETYPES_BACKGROUND, \
     FILE_VIDEO_INFO, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT
 from data_model.actual_data.tag import TagInfo
+from data_model.tool.tool import seconds_to_minutes
+from data_model.tool.interpage import InterpageMixin
 
 __all__ = ["TrackInfo", "TrackListManager"]
 
@@ -262,7 +264,7 @@ class Composer(BaseDataModel, UsedByRegisterMixin):
 
 # -------------------------------------------------------
 
-class TrackInfo(FileLoader, UsedByRegisterMixin):
+class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
     """大类，用于代表一个完整的歌曲JSON文件"""
     no = Integer("no")
     track_type = Integer("track_type")
@@ -301,11 +303,13 @@ class TrackInfo(FileLoader, UsedByRegisterMixin):
         self.name = TrackName('name')
         self.used_by = TrackUsedBy()
         self.reference = UrlModelListManager('reference')
+        self.image = UrlModel()
 
         # Load Data
         self.name.load(data["name"])
         self.reference.load(data["reference"])
         self.version.load(data["version"])
+        self.image.load(data["image"])
 
     @staticmethod
     def _get_instance_id(data: dict):
@@ -323,13 +327,15 @@ class TrackInfo(FileLoader, UsedByRegisterMixin):
         t = {
             "uuid": self.uuid,
 
-            "name": self.desc.to_json_basic(),
+            "name": self.name.to_json_basic(),
             "desc": self.desc.to_json_basic(),
 
             "release_date": int(self.release_date.timestamp()),
+            "release_date_format": self.release_date.strftime("%Y-%m-%d %H:%M:%S"),
             "no": self.no,
             "track_type": self.track_type,
             "duration": self.duration,
+            "duration_splited": seconds_to_minutes(self.duration),
             "file_type": self.filetype,
 
             "composer": self.composer.to_json_basic(),
@@ -337,7 +343,9 @@ class TrackInfo(FileLoader, UsedByRegisterMixin):
             "version": self.version.to_json_basic(),
             "special_case": self.special_case.to_json_basic(),
             "reference": self.reference.to_json_basic(),
-            "used_by": self.used_by.to_json_basic()
+            "used_by": self.used_by.to_json_basic(),
+            "image": self.image.to_json_basic(),
+            "interpage": self.get_interpage_data()
         }
         return t
 
@@ -350,13 +358,23 @@ class TrackInfo(FileLoader, UsedByRegisterMixin):
             "instance_id": self.instance_id,
             "name": self.name.to_json_basic(),
             "desc": self.desc.to_json_basic(),
-            "composer": self.composer.to_json_basic()
+            "composer": self.composer.to_json_basic(),
+            "image": self.image.to_json_basic(),
+            "interpage": self.get_interpage_data()
         }
         return t
 
     @classmethod
     def get_instance(cls, instance_id):
         return super().get_instance(instance_id)
+
+    def _get_instance_offset(self, offset: int):
+        t = self.instance_id.split("_")
+        no = int(t[1]) + offset
+        try:
+            return self._instance["_".join([t[0], str(no)])]
+        except KeyError:
+            return None
 
 
 class TrackListManager(BaseDataModelListManager):

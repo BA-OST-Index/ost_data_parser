@@ -4,6 +4,7 @@ from ..constant.file_type import FILETYPES_STORY, FILETYPES_TRACK
 from ..types.metatype.base_model import BaseDataModelListManager
 from ..types.url import UrlModel
 from ..actual_data.tag import TagListManager
+from ..tool.interpage import InterpageMixin
 
 
 class BackgroundUsedBy(BaseUsedBy, UsedByToJsonMixin):
@@ -31,7 +32,7 @@ class BackgroundUsedBy(BaseUsedBy, UsedByToJsonMixin):
             raise ValueError
 
 
-class BackgroundInfo(FileLoader, UsedByRegisterMixin):
+class BackgroundInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
     _instance = {}
 
     def __init__(self, **kwargs):
@@ -66,7 +67,8 @@ class BackgroundInfo(FileLoader, UsedByRegisterMixin):
             "desc": self.desc.to_json_basic(),
             "tag": self.tag.to_json_basic(),
             "image": self.image.to_json_basic(),
-            "used_by": self.used_by.to_json_basic()
+            "used_by": self.used_by.to_json_basic(),
+            "interpage": self.get_interpage_data()
         }
 
     def to_json_basic(self):
@@ -77,12 +79,24 @@ class BackgroundInfo(FileLoader, UsedByRegisterMixin):
 
             "name": self.name.to_json_basic(),
             "desc": self.desc.to_json_basic(),
-            "image": self.image.to_json_basic()
+            "image": self.image.to_json_basic(),
+            "interpage": self.get_interpage_data()
         }
 
     @classmethod
     def get_instance(cls, instance_id):
         return super().get_instance(instance_id)
+
+    def _get_instance_offset(self, offset: int):
+        keys = list(self._instance.keys())
+        curr_index = keys.index(self.instance_id)
+
+        try:
+            if curr_index == 0 and offset < 0:
+                raise ValueError
+            return self._instance[keys[curr_index + offset]]
+        except (KeyError, ValueError, IndexError):
+            return None
 
 
 class BackgroundListManager(BaseDataModelListManager):

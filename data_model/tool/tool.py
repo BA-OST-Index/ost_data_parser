@@ -71,3 +71,7 @@ class OrderedDictWithCounter:
 
     def __len__(self):
         return len(self.ordered_dict.keys())
+
+
+def seconds_to_minutes(seconds: int):
+    return seconds // 60, seconds % 60

@@ -2,9 +2,10 @@ from .track import TrackInfo
 from ..types.url import UrlModel
 from ..loader import i18n_translator, FileLoader
 from ..tool.parent_data import IParentData
+from ..tool.interpage import InterpageMixin
 
 
-class UiInfo(FileLoader, IParentData):
+class UiInfo(FileLoader, IParentData, InterpageMixin):
     _instance = {}
 
     def __init__(self, **kwargs):
@@ -32,9 +33,20 @@ class UiInfo(FileLoader, IParentData):
             "track": self.track.to_json_basic(),
             "image": self.image.to_json_basic(),
 
-            "parent_data": self.parent_data_to_json()
+            "parent_data": self.parent_data_to_json(),
+            "interpage": self.get_interpage_data()
         }
 
     def to_json_basic(self):
         return self.to_json()
 
+    def _get_instance_offset(self, offset: int):
+        keys = list(self._instance.keys())
+        curr_index = keys.index(self.instance_id)
+
+        try:
+            if curr_index == 0 and offset < 0:
+                return None
+            return self._instance[keys[curr_index + offset]]
+        except (IndexError, KeyError):
+            return None

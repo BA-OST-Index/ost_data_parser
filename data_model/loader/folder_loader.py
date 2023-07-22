@@ -45,7 +45,21 @@ class GenericFolder(FolderLoader):
 
 
 class TrackFolder(GenericFolder):
-    pass
+    def to_json(self):
+        d = super().to_json()
+        try:
+            d["include"].sort(key=lambda i: i[1]["no"])
+        except KeyError:
+            pass
+        return d
+
+    def to_json_basic(self):
+        d = super().to_json_basic()
+        try:
+            d["include"].sort(key=lambda i: i[1]["no"])
+        except KeyError:
+            pass
+        return d
 
 
 class TagFolder(GenericFolder):
