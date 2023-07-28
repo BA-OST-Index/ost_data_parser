@@ -38,6 +38,21 @@ class ParentDataTool:
 
         return d
 
+    @staticmethod
+    def export_parents_to_json_without_last_parent(data: ParentData) -> dict:
+        parents = ParentDataTool.unpack_parents(data=data)
+        d = {}
+        current_dict = d
+
+        for num, data in enumerate(parents):
+            current_dict["name"] = data.name.to_json()
+            current_dict["desc"] = data.desc.to_json()
+            current_dict["namespace"] = data.namespace
+            current_dict["path"] = data.path
+            current_dict["extra_data"] = data.extra_data
+
+        return d
+
 
 class ParentDataMixin(abc.ABC):
     def load_parent_data(self):
@@ -70,6 +85,10 @@ class IParentData:
     @staticmethod
     def export_parents_to_json(data: ParentData):
         return ParentDataTool.export_parents_to_json(data)
+
+    @staticmethod
+    def export_parents_to_json_without_last_parent(data):
+        return ParentDataTool.export_parents_to_json_without_last_parent(data)
 
     def parent_data_to_json(self):
         if self.parent_data is None:

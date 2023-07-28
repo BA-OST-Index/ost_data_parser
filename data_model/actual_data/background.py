@@ -1,6 +1,6 @@
 from ..loader import FileLoader, i18n_translator
 from .used_by import BaseUsedBy, OrderedDictWithCounter, UsedByToJsonMixin, UsedByRegisterMixin
-from ..constant.file_type import FILETYPES_STORY, FILETYPES_TRACK
+from ..constant.file_type import FILETYPES_STORY, FILETYPES_TRACK, FILE_STORY_EVENT
 from ..types.metatype.base_model import BaseDataModelListManager
 from ..types.url import UrlModel
 from ..actual_data.tag import TagListManager
@@ -11,7 +11,7 @@ class BackgroundUsedBy(BaseUsedBy, UsedByToJsonMixin):
     # Copied from `character.py`
     # I did not merge simply because they're not even the same one, after all.
     # And by that said they are possible to be changed in the future independently.
-    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_TRACK]
+    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_TRACK, FILE_STORY_EVENT]
     _components = ["data_story", "data_track"]
 
     def __init__(self):
@@ -22,7 +22,7 @@ class BackgroundUsedBy(BaseUsedBy, UsedByToJsonMixin):
         filetype = file_loader.filetype
         instance_id = file_loader.instance_id
         if filetype in self.SUPPORTED_FILETYPE:
-            if filetype in FILETYPES_STORY:
+            if filetype in [*FILETYPES_STORY, FILE_STORY_EVENT]:
                 if instance_id not in self.data_story.keys():
                     self.data_story[instance_id] = file_loader
             elif filetype in FILETYPES_TRACK:

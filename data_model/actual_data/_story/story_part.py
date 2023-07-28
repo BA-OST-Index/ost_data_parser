@@ -62,9 +62,9 @@ class StoryInfoPart(IToJson):
     def to_json(self):
         d = {"name": self.name.to_json(),
              "desc": self.desc.to_json(),
-             "character": self.character.to_json(),
-             "track": self.track.to_json(),
-             "background": self.background.to_json()}
+             "character": self.character.to_json_basic(),
+             "track": self.track.to_json_basic(),
+             "background": self.background.to_json_basic()}
 
         if "is_battle" in self.data.keys():
             d["is_battle"] = self.is_battle

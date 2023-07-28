@@ -28,10 +28,12 @@ class UiInfo(FileLoader, IParentData, InterpageMixin):
         return {
             "uuid": self.uuid,
             "filetype": self.filetype,
+            "namespace": self.namespace,
             "name": self.name.to_json_basic(),
             "desc": self.desc.to_json_basic(),
             "track": self.track.to_json_basic(),
             "image": self.image.to_json_basic(),
+            "id": self.data["name"].split("_")[1],
 
             "parent_data": self.parent_data_to_json(),
             "interpage": self.get_interpage_data()
@@ -50,3 +52,29 @@ class UiInfo(FileLoader, IParentData, InterpageMixin):
             return self._instance[keys[curr_index + offset]]
         except (IndexError, KeyError):
             return None
+
+
+class UiInfoEvent(UiInfo):
+    def __init__(self, **kwargs):
+        super().__init__(data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])
+
+        self.event_id = self.data["event_id"]
+
+    @staticmethod
+    def _get_instance_id(data: dict):
+        return "UI_" + "_".join([data["event_id"], data["name"].split("_")[1]])
+
+    def to_json(self):
+        return {
+            "uuid": self.uuid,
+            "filetype": self.filetype,
+            "name": self.name.to_json_basic(),
+            "desc": self.desc.to_json_basic(),
+            "track": self.track.to_json_basic(),
+            "image": self.image.to_json_basic(),
+            "event_id": self.event_id,
+            "id": self.data["name"].split("_")[1],
+
+            "parent_data": self.parent_data_to_json(),
+            "interpage": self.get_interpage_data()
+        }

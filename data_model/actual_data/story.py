@@ -1,6 +1,7 @@
 from data_model.types.metatype.base_type import *
 from data_model.types.metatype.complex import *
 from data_model.actual_data._story.story_pos import *
+from data_model.types.url import UrlModel
 from data_model.loader import i18n_translator
 from data_model.types.lang_string import LangStringModelList
 from data_model.loader import FileLoader
@@ -29,6 +30,8 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
         self.pos = storyPosAuto(data["pos"])
         self.part = StoryInfoPartListManager(data["part"])
         self.bgm_battle = self.part.get_bgm_special()
+        self.image = UrlModel()
+        self.image.load(self.data["image"])
 
         # Special case: some stories still have content after the battle,
         # and in that case, there will be two description text.
@@ -49,6 +52,8 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
                 track.register(self)
             for char in part.character.character:
                 char.register(self)
+            for background in part.background.background:
+                background.register(self)
 
     @staticmethod
     def _get_instance_id(data: dict):
@@ -61,7 +66,8 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
         if self.parent_data is None:
             return self.parent_data
         else:
-            return self.export_parents_to_json(self.unpack_parents(self.parent_data, False)[0])
+            l = [self.export_parents_to_json_without_last_parent(i) for i in self.unpack_parents(self.parent_data, False)]
+            return l
 
     def to_json(self):
         t = {
@@ -71,10 +77,10 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
             "name": self.name.to_json_basic(),
             "desc": [i for i in self.desc.to_json_basic()],
             "pos": self.pos.to_json_basic(),
-            "image": self.data["image"],
+            "image": self.image.to_json_basic(),
             "instance_id": self.instance_id,
 
-            "part": self.part.to_json_basic(),
+            "part": self.part.to_json(),
             "is_battle": self.is_battle,
         }
         if self.is_battle:
@@ -84,7 +90,24 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
         return t
 
     def to_json_basic(self):
-        return self.to_json()
+        t = {
+            "uuid": self.uuid,
+            "filetype": self.filetype,
+
+            "name": self.name.to_json_basic(),
+            "desc": [i for i in self.desc.to_json_basic()],
+            "pos": self.pos.to_json_basic(),
+            "image": self.image.to_json_basic(),
+            "instance_id": self.instance_id,
+
+            "part": self.part.to_json(),
+            "is_battle": self.is_battle,
+        }
+        if self.is_battle:
+            t["bgm_battle"] = self.bgm_battle.to_json_basic()
+        if self.parent_data:
+            t["parent_data"] = self.parent_data_to_json()
+        return t
 
     @classmethod
     def get_instance(cls, instance_id):
@@ -174,15 +197,22 @@ class StoryInfoBond(StoryInfo):
             "image": self.data["image"],
             "instance_id": self.instance_id,
 
-            "part": self.part.to_json_basic(),
+            "part": self.part.to_json(),
             "is_memory": self.is_memory
         }
+
         if self.is_memory:
             t["bgm_bond"] = self.bgm_memory.to_json_basic()
         try:
             t["parent_data"] = self.parent_data_to_json()
         except AttributeError:
             pass
+
+        # find students
+        from .character import StudentInfo
+        stu = StudentInfo.get_instance(instance_id=self.pos.student.upper())
+        t["student"] = stu.to_json_basic()
+
         return t
 
     def to_json_basic(self):

@@ -6,7 +6,7 @@ from ..constant.file_type import FILETYPES_TRACK, FILETYPES_TRACK_DIR, \
     FILE_DIR_CHARACTER_ALL, FILE_DIR_CHARACTER_CATEGORY, FILE_DIR_STUDENT_SINGLE, FILE_DIR_STUDENT_BOND, \
     FILE_STORY_BOND, FILETYPES_STORY, FILETYPES_STORY_DIR, FILE_CHARACTER_INFO, \
     FILE_BACKGROUND_INFO, FILE_DIR_BACKGROUND_ALL, \
-    FILETYPES_UI, FILETYPES_UI_DIR, \
+    FILE_UI_CHILD, FILE_UI_EVENT, FILETYPES_UI_DIR, \
     FILETYPES_BATTLE, FILETYPES_BATTLE_DIR, \
     FILE_BATTLE_MAIN, FILE_BATTLE_EVENT, FILE_BATTLE_ARENA, FILE_BATTLE_TOTAL_ASSAULT, FILE_BATTLE_BOUNTY_HUNT, \
     FILE_BATTLE_SCHOOL_EXCHANGE, FILE_BATTLE_SPECIAL_COMMISSION, \
@@ -19,12 +19,13 @@ from ..actual_data.tag import TagInfo
 from ..actual_data.story import StoryInfoBond, StoryInfo
 from ..actual_data.background import BackgroundInfo
 from ..actual_data.character import NpcInfo
-from ..actual_data.ui import UiInfo
+from ..actual_data.ui import UiInfo, UiInfoEvent
 from ..actual_data.battle import MainBattleInfo, SchoolExchangeInfo, TotalAssaultInfo, \
     SpecialCommissionInfo, BountyHuntInfo, EventBattleInfo
 from ..actual_data.video import VideoInfo
 
-# This implementation of State design pattern is archived through `yield` and `yield from` expressions.
+
+# This implementation of State design pattern is achieved through `yield` and `yield from` expressions.
 # It is mostly to avoid the messy and long call stack shown in PyCharm's debugger.
 # A shoutout to Python Cookbook (3rd) and Fluent Python (2nd) as they all mentioned this special "yielding" feature.
 
@@ -95,8 +96,10 @@ class UiLoaderDetect(BaseLoaderDetect):
 
     @staticmethod
     def detect(entry):
-        if entry.filetype in FILETYPES_UI:
+        if entry.filetype == FILE_UI_CHILD:
             yield UiInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+        elif entry.filetype == FILE_UI_EVENT:
+            yield UiInfoEvent(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
         elif entry.filetype in FILETYPES_UI_DIR:
             yield UiLoader(namespace=entry.namespace, json_data=entry.data,
                            basepath=entry.filepath, parent_data=entry.parent_data)

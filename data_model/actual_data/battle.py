@@ -13,7 +13,7 @@ class BaseBattleInfo(FileLoader, IParentData):
         if self.parent_data is None:
             return self.parent_data
         else:
-            return self.export_parents_to_json(self.unpack_parents(self.parent_data, False)[0])
+            return [self.export_parents_to_json(self.unpack_parents(self.parent_data, False)[0])]
 
     @classmethod
     def get_instance(cls, instance_id):
@@ -140,6 +140,8 @@ class SchoolExchangeInfo(BaseBattleInfo):
             "name": self.name.to_json_basic(),
             "name_ori": self.name_ori,
             "track": self.track.to_json_basic(),
+            "id": self.data["id"].lower(),
+            "namespace": self.namespace,
 
             "parent_data": self.parent_data_to_json()
         }
@@ -164,7 +166,7 @@ class TotalAssaultInfo(BaseBattleInfo):
         self.faction_ori = schale_db_manager.query_constant("raids", data["name"], "Faction")
         self.faction = schale_db_manager.query("localization", "BossFaction_" + self.faction_ori)
 
-        self.name_ori = schale_db_manager.query("raids", data["name"], "PathName")
+        self.name_ori = schale_db_manager.query_constant("raids", data["name"], "PathName")
         self.name = schale_db_manager.query("raids", data["name"], "Name")
         self.profile = schale_db_manager.query("raids", data["name"], "Profile")
 
@@ -181,9 +183,11 @@ class TotalAssaultInfo(BaseBattleInfo):
         return {
             "uuid": self.uuid,
             "filetype": self.filetype,
+            "id": self.data["name"].lower(),
+            "namespace": self.namespace,
 
             "name": self.name.to_json_basic(),
-            "name_ori": self.name_ori.to_json_basic(),
+            "name_ori": self.name_ori,
             "faction": self.faction.to_json_basic(),
             "faction_ori": self.faction_ori,
 
@@ -197,6 +201,7 @@ class TotalAssaultInfo(BaseBattleInfo):
         return {
             "uuid": self.uuid,
             "filetype": self.filetype,
+            "id": self.data["name"].lower(),
 
             "name": self.name.to_json_basic(),
             "faction": self.faction.to_json_basic(),
@@ -231,6 +236,8 @@ class SpecialCommissionInfo(BaseBattleInfo):
         return {
             "uuid": self.uuid,
             "filetype": self.filetype,
+            "id": self.data["id"].lower(),
+            "namespace": self.namespace,
 
             "name": self.name.to_json_basic(),
             "name_ori": self.name_ori,
@@ -243,6 +250,8 @@ class SpecialCommissionInfo(BaseBattleInfo):
         return {
             "uuid": self.uuid,
             "filetype": self.filetype,
+            "id": self.data["id"].lower(),
+            "namespace": self.namespace,
 
             "name": self.name.to_json_basic(),
             "track": self.track.to_json_basic(),
@@ -276,6 +285,8 @@ class BountyHuntInfo(BaseBattleInfo):
         return {
             "uuid": self.uuid,
             "filetype": self.filetype,
+            "id": self.data["id"].lower(),
+            "namespace": self.namespace,
 
             "name": self.name.to_json_basic(),
             "name_ori": self.name_ori,
@@ -288,6 +299,8 @@ class BountyHuntInfo(BaseBattleInfo):
         return {
             "uuid": self.uuid,
             "filetype": self.filetype,
+            "id": self.data["id"].lower(),
+            "namespace": self.namespace,
 
             "name": self.name.to_json_basic(),
             "track": self.track.to_json_basic(),
@@ -347,7 +360,8 @@ class EventBattleInfo(MainBattleInfo):
             "is_hard": self.is_hard,
             "is_normal": self.is_normal,
             "is_sub": self.is_sub,
-            "interpage": self.get_interpage_data()
+            "interpage": self.get_interpage_data(),
+            "parent_data": self.parent_data_to_json()
         }
 
     def _get_instance_offset(self, offset: int):

@@ -112,10 +112,27 @@ class CharacterLoader(FolderLoader):
 
         # If the filetype is FILE_DIR_STUDENT_SINGLE or something
         try:
-            d["student"] = self.student.to_json_basic()
+            d["student"] = self.student.to_json()
         except Exception:
             pass
         return d
 
     def to_json_basic(self):
-        return self.to_json()
+        d = {
+            "uuid": self.uuid,
+            "filetype": self.filetype,
+            "namespace": self.namespace,
+            "name": self.data["name"],
+            "include": []
+        }
+        for i in self.including:
+            if i.loader.filetype in [-54]:
+                continue
+            d["include"].append([i.name, i.loader.to_json_basic()])
+
+        # If the filetype is FILE_DIR_STUDENT_SINGLE or something
+        try:
+            d["student"] = self.student.to_json()
+        except Exception:
+            pass
+        return d

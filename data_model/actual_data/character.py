@@ -7,7 +7,7 @@ from ..tool.interpage import InterpageMixin
 
 
 class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
-    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT]
+    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_TRACK, FILE_STORY_EVENT]
     _components = ["data_story", "data_track"]
 
     def __init__(self):
@@ -18,7 +18,7 @@ class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
         filetype = file_loader.filetype
         instance_id = file_loader.instance_id
         if filetype in self.SUPPORTED_FILETYPE:
-            if filetype in FILETYPES_STORY:
+            if filetype in [*FILETYPES_STORY, FILE_STORY_EVENT]:
                 if instance_id not in self.data_story.keys():
                     self.data_story[instance_id] = file_loader
             elif filetype in FILETYPES_TRACK:
@@ -90,7 +90,16 @@ class NpcInfo(CharacterInfo, UsedByRegisterMixin):
         return d
 
     def to_json_basic(self):
-        return self.to_json()
+        d = {
+            "uuid": self.uuid,
+            "filetype": self.filetype,
+            "namespace": self.namespace,
+            "name": self.name.to_json_basic(),
+            "desc": self.name.to_json_basic(),
+            "image": self.image.to_json_basic(),
+            "interpage": self.get_interpage_data()
+        }
+        return d
 
     @staticmethod
     def _get_instance_id(data: dict):
@@ -108,9 +117,11 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
         self.data = kwargs["data"]
         self.namespace = kwargs["namespace"]
 
-        self.path_name = schale_db_manager.query("students", self.data, "PathName")
+        self.path_name = schale_db_manager.query_constant("students", self.data, "PathName")
+        self.dev_name = schale_db_manager.query_constant("students", self.data, "DevName")
         self.family_name = schale_db_manager.query("students", self.data, "FamilyName")
         self.personal_name = schale_db_manager.query("students", self.data, "PersonalName")
+        self.name = schale_db_manager.query("students", self.data, "Name")
         self.school_year = schale_db_manager.query("students", self.data, "SchoolYear")
         self.age = schale_db_manager.query("students", self.data, "CharacterAge")
         self.birthday = schale_db_manager.query("students", self.data, "BirthDay")
@@ -127,6 +138,8 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
                                                                                                     "School"))
         self.club = schale_db_manager.query("localization",
                                             "Club_" + schale_db_manager.query_constant("students", self.data, "Club"))
+        self.collection_bg = schale_db_manager.query_constant("students", self.data, "CollectionBG")
+        self.collection_texture = schale_db_manager.query_constant("students", self.data, "CollectionTexture")
 
         self.used_by = CharacterUsedBy()
 
@@ -137,9 +150,11 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
     def to_json(self):
         return {
             "name": {
-                "path_name": self.path_name.to_json(),
+                "path_name": self.path_name,
+                "dev_name": self.dev_name,
                 "family_name": self.family_name.to_json(),
                 "personal_name": self.personal_name.to_json(),
+                "name": self.name.to_json()
             },
             "birthday": {
                 "localized": self.birthday_localized.to_json(),
@@ -154,16 +169,28 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
                 "long": self.school_long.to_json()
             },
             "club": self.club.to_json(),
-            "age": self.age,
+            "age": self.age.to_json(),
             "hobby": self.hobby.to_json(),
             "used_by": self.used_by.to_json_basic(),
-            "interpage": self.get_interpage_data()
+            "interpage": self.get_interpage_data(),
+            "image": {
+                "collection_bg": self.collection_bg,
+                "collection_texture": self.collection_texture
+            }
         }
 
     def to_json_basic(self):
         return {
             "name": {
-                "path_name": self.path_name.to_json_basic(),
+                "path_name": self.path_name,
+                "dev_name": self.dev_name,
+                "family_name": self.family_name.to_json(),
+                "personal_name": self.personal_name.to_json(),
+                "name": self.name.to_json()
+            },
+            "image": {
+                "collection_bg": self.collection_bg,
+                "collection_texture": self.collection_texture
             },
             "birthday": self.birthday.to_json_basic(),
             "school": self.school_long.to_json_basic(),
@@ -176,6 +203,24 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
     @classmethod
     def get_instance(cls, instance_id):
         return super().get_instance(instance_id)
+
+    def get_mixed_interpage_data(self, prev, next):
+        return {
+            "prev": {
+                "name": {
+                    "path_name": prev.path_name if prev else "[NO_PREV]",
+                    "dev_name": prev.dev_name if prev else "[NO_PREV]"
+                },
+                "namespace": prev.namespace if prev else "[NO_PREV]"
+            },
+            "next": {
+                "name": {
+                    "path_name": next.path_name if next else "[NO_NEXT]",
+                    "dev_name": next.dev_name if next else "[NO_NEXT]"
+                },
+                "namespace": next.namespace if next else "[NO_NEXT]"
+            }
+        }
 
 
 class CharacterListManager(BaseDataModelListManager):

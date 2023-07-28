@@ -8,8 +8,8 @@ from data_model.loader import i18n_translator, FileLoader
 from data_model.loader.manager_constant import constant_manager
 from data_model.actual_data.used_by import BaseUsedBy, UsedByRegisterMixin, OrderedDictWithCounter, UsedByToJsonMixin
 from data_model.actual_data._track.track_version import *
-from data_model.constant.file_type import FILETYPES_STORY, FILETYPES_BATTLE, FILETYPES_UI, FILETYPES_BACKGROUND, \
-    FILE_VIDEO_INFO, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT
+from data_model.constant.file_type import FILETYPES_STORY, FILETYPES_BATTLE, FILETYPES_BACKGROUND, \
+    FILE_VIDEO_INFO, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT, FILE_UI_EVENT, FILE_UI_CHILD
 from data_model.actual_data.tag import TagInfo
 from data_model.tool.tool import seconds_to_minutes
 from data_model.tool.interpage import InterpageMixin
@@ -18,9 +18,9 @@ __all__ = ["TrackInfo", "TrackListManager"]
 
 
 class TrackUsedBy(BaseUsedBy, UsedByToJsonMixin):
-    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_BATTLE, *FILETYPES_UI, *FILETYPES_BACKGROUND, FILE_VIDEO_INFO,
-                          FILE_STORY_EVENT, FILE_BATTLE_EVENT]
-    _components = ["data_background", "data_story", "data_battle", "data_ui"]
+    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_BATTLE, *FILETYPES_BACKGROUND, FILE_VIDEO_INFO,
+                          FILE_STORY_EVENT, FILE_BATTLE_EVENT, FILE_UI_EVENT, FILE_UI_CHILD]
+    _components = ["data_background", "data_story", "data_battle", "data_ui", "data_video"]
 
     def __init__(self):
         self.data_background = OrderedDictWithCounter()
@@ -33,13 +33,13 @@ class TrackUsedBy(BaseUsedBy, UsedByToJsonMixin):
         filetype = file_loader.filetype
         instance_id = file_loader.instance_id
         if filetype in self.SUPPORTED_FILETYPE:
-            if filetype in FILETYPES_STORY:
+            if filetype in [*FILETYPES_STORY, FILE_STORY_EVENT]:
                 if instance_id not in self.data_story.keys():
                     self.data_story[instance_id] = file_loader
-            elif filetype in FILETYPES_BATTLE:
+            elif filetype in [*FILETYPES_BATTLE, FILE_BATTLE_EVENT]:
                 if instance_id not in self.data_battle.keys():
                     self.data_battle[instance_id] = file_loader
-            elif filetype in FILETYPES_UI:
+            elif filetype in [FILE_UI_EVENT, FILE_UI_CHILD]:
                 if instance_id not in self.data_ui.keys():
                     self.data_ui[instance_id] = file_loader
             elif filetype in FILETYPES_BACKGROUND:
@@ -326,9 +326,10 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
         self.load_special_case()
         t = {
             "uuid": self.uuid,
-
+            "filetype": self.filetype,
             "name": self.name.to_json_basic(),
             "desc": self.desc.to_json_basic(),
+            "namespace": self.namespace,
 
             "release_date": int(self.release_date.timestamp()),
             "release_date_format": self.release_date.strftime("%Y-%m-%d %H:%M:%S"),
@@ -336,7 +337,6 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
             "track_type": self.track_type,
             "duration": self.duration,
             "duration_splited": seconds_to_minutes(self.duration),
-            "file_type": self.filetype,
 
             "composer": self.composer.to_json_basic(),
             "tags": self.tags.to_json_basic(),
@@ -354,6 +354,8 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
         t = {
             "uuid": self.uuid,
             "no": self.no,
+            "filetype": self.filetype,
+            "namespace": self.namespace,
             "track_type": self.track_type,
             "instance_id": self.instance_id,
             "name": self.name.to_json_basic(),

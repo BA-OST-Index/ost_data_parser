@@ -29,9 +29,9 @@ class TagUsedBy(BaseUsedBy, UsedByToJsonMixin):
 
 
 class TagInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
-    _color_to_css = {"green": "text-bg-success", "blue": "text-bg-primary",
-                     "red": "text-bg-danger", "yellow": "text-bg-warning",
-                     "grey": "text-bg-secondary"}
+    _color_to_css = {"green": "success", "blue": "primary",
+                     "red": "danger", "yellow": "warning",
+                     "grey": "secondary"}
     _instance = {}
 
     color = String('color')
