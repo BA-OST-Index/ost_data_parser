@@ -82,7 +82,7 @@ class NpcInfo(CharacterInfo, UsedByRegisterMixin):
             "filetype": self.filetype,
             "namespace": self.namespace,
             "name": self.name.to_json_basic(),
-            "desc": self.name.to_json_basic(),
+            "desc": self.desc.to_json_basic(),
             "image": self.image.to_json_basic(),
             "used_by": self.used_by.to_json_basic(),
             "interpage": self.get_interpage_data()
@@ -95,7 +95,7 @@ class NpcInfo(CharacterInfo, UsedByRegisterMixin):
             "filetype": self.filetype,
             "namespace": self.namespace,
             "name": self.name.to_json_basic(),
-            "desc": self.name.to_json_basic(),
+            "desc": self.desc.to_json_basic(),
             "image": self.image.to_json_basic(),
             "interpage": self.get_interpage_data()
         }

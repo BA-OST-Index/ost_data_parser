@@ -1,6 +1,6 @@
 import os
 import json
-from ..types.lang_string import LangStringModel
+from ..types.lang_string import LangStringModel, ZhLangStringModel
 from ..config import DATA_PATH_TRANSLATION
 
 
@@ -28,16 +28,19 @@ class SchaleDbSingleLanguage:
             self.all_trans[i[:-5]] = content
 
     def query(self, filename, *keys):
-        r = self.all_trans[filename]
-        for i in keys:
-            r = r[i]
-        return r
+        try:
+            r = self.all_trans[filename]
+            for i in keys:
+                r = r[i]
+            return r
+        except KeyError:
+            return "[NO_KEY_DATA]"
 
 
 class SchaleDbManager:
     def __init__(self, basepath):
         self.basepath = basepath
-        self.filelist = set(os.listdir(basepath)) - {"zh_cn_cn", "zh_cn_jp", "zh_cn_tw"}
+        self.filelist = set(os.listdir(basepath)) - {"zh_cn"}
 
         self.constants = {}
         self.load()
@@ -49,7 +52,7 @@ class SchaleDbManager:
     def query(self, filename, *keys):
         temp = {lang: value.query(filename, *keys)
                 for lang, value in self.constants.items()}
-        m = LangStringModel()
+        m = ZhLangStringModel()
         m.load(temp)
         return m
 

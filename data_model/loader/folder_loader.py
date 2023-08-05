@@ -1,7 +1,8 @@
 import os
 from data_model.loader._loader import FolderLoader
 from ..actual_data.character import StudentInfo
-from ..constant.file_type import FILE_DIR_STUDENT_BOND, FILE_DIR_STUDENT_SINGLE
+from ..constant.file_type import FILE_DIR_EVENT_STORY, FILE_DIR_STUDENT_SINGLE
+from data_model.types.url import UrlModel
 
 
 class GenericFolder(FolderLoader):
@@ -71,7 +72,20 @@ class BackgroundLoader(GenericFolder):
 
 
 class StoryLoader(GenericFolder):
-    pass
+    def __init__(self, namespace: list, basepath, json_data=None, parent_data=None):
+        super().__init__(namespace, basepath, json_data, parent_data)
+        self.image = UrlModel()
+        self.image.load(self.data["image"])
+
+    def to_json_basic(self):
+        d = super().to_json_basic()
+        d["image"] = self.image.to_json_basic()
+        return d
+
+    def to_json(self):
+        d = super().to_json()
+        d["image"] = self.image.to_json()
+        return d
 
 
 class UiLoader(GenericFolder):
@@ -87,7 +101,23 @@ class VideoLoader(GenericFolder):
 
 
 class EventLoader(GenericFolder):
-    pass
+    def __init__(self, namespace: list, basepath, json_data=None, parent_data=None):
+        super().__init__(namespace, basepath, json_data, parent_data)
+        if self.data["filetype"] == FILE_DIR_EVENT_STORY:
+            self.image = UrlModel()
+            self.image.load(self.data["image"])
+
+    def to_json_basic(self):
+        d = super().to_json_basic()
+        if self.data["filetype"] == FILE_DIR_EVENT_STORY:
+            d["image"] = self.image.to_json_basic()
+        return d
+
+    def to_json(self):
+        d = super().to_json()
+        if self.data["filetype"] == FILE_DIR_EVENT_STORY:
+            d["image"] = self.image.to_json()
+        return d
 
 
 class CharacterLoader(FolderLoader):
