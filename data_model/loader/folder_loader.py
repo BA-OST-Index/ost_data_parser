@@ -5,6 +5,24 @@ from ..constant.file_type import FILE_DIR_EVENT_STORY, FILE_DIR_STUDENT_SINGLE
 from data_model.types.url import UrlModel
 
 
+def battle_comparison(item):
+    item = item[0]
+    if item.endswith(".json"):
+        item = item[:-5]
+        try:
+            no = int(item[1:])
+
+            if no < 10:
+                # for event missions (e.g. N1, N10); main mission will always greater than 10 (e.g. N10)
+                return item[0] + "0" + str(no) + ".json"
+            else:
+                return item
+        except (ValueError, TypeError):
+            # for bounty and other stuff, anyway this is messy
+            pass
+    return item
+
+
 class GenericFolder(FolderLoader):
     """Basically a class for implementing normal, generic folder loader, without being copypasta."""
 
@@ -111,12 +129,16 @@ class EventLoader(GenericFolder):
         d = super().to_json_basic()
         if self.data["filetype"] == FILE_DIR_EVENT_STORY:
             d["image"] = self.image.to_json_basic()
+        if self.namespace[-1].lower() == "battle":
+            d["include"].sort(key=battle_comparison)
         return d
 
     def to_json(self):
         d = super().to_json()
         if self.data["filetype"] == FILE_DIR_EVENT_STORY:
             d["image"] = self.image.to_json()
+        if self.namespace[-1].lower() == "battle":
+            d["include"].sort(key=battle_comparison)
         return d
 
 

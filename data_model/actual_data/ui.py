@@ -55,14 +55,15 @@ class UiInfo(FileLoader, IParentData, InterpageMixin):
 
 
 class UiInfoEvent(UiInfo):
+    _instance = {}
+
     def __init__(self, **kwargs):
         super().__init__(data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])
-
         self.event_id = self.data["event_id"]
 
     @staticmethod
     def _get_instance_id(data: dict):
-        return "UI_" + "_".join([data["event_id"], data["name"].split("_")[1]])
+        return "UI_" + "_".join([str(data["event_id"]), data["name"].split("_")[-2]])
 
     def to_json(self):
         return {
@@ -73,7 +74,7 @@ class UiInfoEvent(UiInfo):
             "track": self.track.to_json_basic(),
             "image": self.image.to_json_basic(),
             "event_id": self.event_id,
-            "id": self.data["name"].split("_")[1],
+            "id": self.data["name"].split("_")[-2],
 
             "parent_data": self.parent_data_to_json(),
             "interpage": self.get_interpage_data()

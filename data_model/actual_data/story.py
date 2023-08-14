@@ -5,11 +5,12 @@ from data_model.types.url import UrlModel
 from data_model.loader import i18n_translator
 from data_model.types.lang_string import LangStringModelList
 from data_model.loader import FileLoader
-from data_model.constant.file_type import FILE_STORY_MAIN, FILE_STORY_SIDE, FILE_STORY_SHORT, FILE_STORY_EVENT, \
-    FILE_STORY_BOND, FILE_STORY_OTHER
+from data_model.constant.file_type import FILE_STORY_MAIN, FILE_STORY_SIDE, FILE_STORY_SHORT, FILE_STORY_EVENT,\
+    FILE_STORY_OTHER
 from ._story.story_part import StoryInfoPartListManager
 from ..tool.parent_data import IParentData
 from ..tool.interpage import InterpageMixin
+from collections import OrderedDict
 
 
 class StoryInfo(FileLoader, IParentData, InterpageMixin):
@@ -19,7 +20,7 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
 
     _story_type = {FILE_STORY_MAIN: "MAIN", FILE_STORY_SIDE: "SIDE", FILE_STORY_SHORT: "SHORT",
                    FILE_STORY_EVENT: "EVENT", FILE_STORY_OTHER: "OTHER"}
-    _instance = {}
+    _instance = OrderedDict()
 
     def __init__(self, **kwargs):
         super().__init__(data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])
