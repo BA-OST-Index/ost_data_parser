@@ -158,7 +158,8 @@ class CharacterLoader(FolderLoader):
             "uuid": self.uuid,
             "filetype": self.filetype,
             "namespace": self.namespace,
-            "name": self.data["name"],
+            "name": self.name.to_json_basic(),
+            "desc": self.desc.to_json_basic(),
             "include": [[i.name, i.loader.to_json_basic()] for i in self.including]
         }
 
@@ -174,7 +175,8 @@ class CharacterLoader(FolderLoader):
             "uuid": self.uuid,
             "filetype": self.filetype,
             "namespace": self.namespace,
-            "name": self.data["name"],
+            "name": self.name.to_json_basic(),
+            "desc": self.desc.to_json_basic(),
             "include": []
         }
         for i in self.including:
