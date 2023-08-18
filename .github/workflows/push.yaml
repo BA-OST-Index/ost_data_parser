@@ -23,6 +23,7 @@ jobs:
       run: |
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git config --global user.name "github-actions[bot]"
+        cd data_export
         git add .
         git commit -m "${{ github.event.head_commit.message }}"
         git push
