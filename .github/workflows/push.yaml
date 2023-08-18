@@ -26,8 +26,8 @@ jobs:
         git submodule update --remote
     - name: Push changes
       run: |
-        git config user.name github-actions
-        git config user.email github-actions@github.com
+        git config --global user.email "github-actions@github.com"
+        git config --global user.name "github-actions"
         cd data_export
         git add .
         git commit -m "Update: ${{ github.event.head_commit.message }}"
