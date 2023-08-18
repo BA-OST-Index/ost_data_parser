@@ -25,5 +25,5 @@ jobs:
         git config --global user.name "github-actions[bot]"
         cd data_export
         git add .
-        git commit -m "${{ github.event.head_commit.message }}"
+        git commit -m "Update: ${{ github.event.head_commit.message }}"
         git push origin HEAD:main
