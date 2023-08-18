@@ -17,8 +17,10 @@ Expected file tree:
 
 In order to make the `main.py` script work **out of the box**, you'll need to create two symbolic links. They are:
 
-- `ost_parser/data`  <====> `ost_data/`
-- `ost_parser_data_export` <====> `ost_data_export/`
+|Soft-link path|Original path|
+|:---:|:---:|
+|`ost_parser/data`|`ost_data/`|
+|`ost_parser/data_export`|`ost_data_export/`|
 
 Note: these are relative paths shown in the file tree. You may need to replace them with absolute paths to create.
 
