@@ -2,3 +2,7 @@
 	path = data
 	url = https://github.com/BA-OST-Index/ost_data.git
 	branch = main
+[submodule "data_export"]
+	path = data_export
+	url = https://github.com/BA-OST-Index/ost_data_export.git
+	branch = main
