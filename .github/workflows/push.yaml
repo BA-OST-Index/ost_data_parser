@@ -31,4 +31,4 @@ jobs:
         cd data_export
         git add .
         git commit -m "Update: ${{ github.event.head_commit.message }}"
-        git push
+        git push origin HEAD:main
