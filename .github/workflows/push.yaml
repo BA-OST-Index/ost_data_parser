@@ -3,7 +3,7 @@ name: Push
 on:
   push:
   workflow_dispatch:
-  repostory_dispatch:
+  repository_dispatch:
     types: [ost-data-update-event]
 
 jobs:
