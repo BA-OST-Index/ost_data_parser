@@ -12,6 +12,7 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: 'recursive'
+        fetch-depth: 0
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
@@ -26,9 +27,9 @@ jobs:
         git config --global user.email "github-actions@github.com"
         git config --global user.name "github-actions"
         cd ost_data_export
-        git config --unset-all http.https://github.com/.extraheader
         git add .
         git commit -m "Update: ${{ github.event.head_commit.message }}"
+        git config -l | grep 'http\..*\.extraheader' | cut -d= -f1 | xargs -L1 git config --unset-all
         git push https://github-actions[bot]:$REPO_KEY@github.com/BA-OST-Index/ost_data_export.git HEAD:main
       env:
         REPO_KEY: ${{secrets.ACTION_SCRIPT}}
