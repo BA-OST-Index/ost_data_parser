@@ -6,15 +6,15 @@ from functools import partial
 from data_model.loader.loader_detect import get_loader_by_filepath
 
 start_time = time.time()
-TAGS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\tag", None)
-TRACKS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\track", None)
-BACKGROUNDS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\background", None)
-CHARACTERS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\character", None)
-STORIES = get_loader_by_filepath(["main"], r"F:\GitFile\BA_OST_Index_Parser\data\main\story", None)
-BATTLES = get_loader_by_filepath(["main"], r"F:\GitFile\BA_OST_Index_Parser\data\main\battle", None)
-UIS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\ui", None)
-VIDEOS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\video", None)
-EVENTS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\event", None)
+TAGS = get_loader_by_filepath([], r"data/tag", None)
+TRACKS = get_loader_by_filepath([], r"data/track", None)
+BACKGROUNDS = get_loader_by_filepath([], r"data\background", None)
+CHARACTERS = get_loader_by_filepath([], r"data/character", None)
+STORIES = get_loader_by_filepath(["main"], r"data/main/story", None)
+BATTLES = get_loader_by_filepath(["main"], r"data/main/battle", None)
+UIS = get_loader_by_filepath([], r"data/ui", None)
+VIDEOS = get_loader_by_filepath([], r"data/video", None)
+EVENTS = get_loader_by_filepath([], r"data/event", None)
 print(f"Linking Stuff Together: {time.time() - start_time:0.2f}")
 
 BASE_EXPORT = "data_export/"
