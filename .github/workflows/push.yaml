@@ -22,7 +22,6 @@ jobs:
     - name: Update submodules
       run: |
         git submodule update --remote
-        ls -l data_export
     - name: Run main.py
       run: python main.py
     - name: Push changes

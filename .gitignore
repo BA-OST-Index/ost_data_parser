@@ -1,7 +1,7 @@
 .idea/
 test*.py
-data_export
-data_export/
+ost_data_export
+ost_data_export/
 data
 data/
 
@@ -161,3 +161,4 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+/data_export/

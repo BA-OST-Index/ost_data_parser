@@ -17,7 +17,7 @@ VIDEOS = get_loader_by_filepath([], r"data/video", None)
 EVENTS = get_loader_by_filepath([], r"data/event", None)
 print(f"Linking Stuff Together: {time.time() - start_time:0.2f}")
 
-BASE_EXPORT = "data_export/"
+BASE_EXPORT = "ost_data_export/"
 
 join_base = partial(os.path.join, BASE_EXPORT)
 dump_json = partial(json.dump, ensure_ascii=False)
