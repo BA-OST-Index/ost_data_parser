@@ -27,8 +27,10 @@ Note: these are relative paths shown in the file tree. You may need to replace t
 On Windows, use:
 
 ```powershell
-mklink /D [symlink_name] [target]
+mklink /J [symlink_name] [target]
 ```
+
+DO NOT use `/D` as it will make git.submodule function incorrectly.
 
 On Linux, use:
 
