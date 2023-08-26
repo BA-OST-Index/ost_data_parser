@@ -21,9 +21,8 @@ jobs:
         python-version: '3.x'
     - name: Update submodules
       run: |
-        mkdir data
-        mkdir data_export
         git submodule update --remote
+        ls -l data_export
     - name: Run main.py
       run: python main.py
     - name: Push changes
