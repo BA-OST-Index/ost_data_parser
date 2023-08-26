@@ -1,0 +1,34 @@
+name: Push
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Run main.py
+      run: python main.py
+    - name: Update submodules
+      run: |
+        git submodule update --remote
+    - name: Push changes
+      run: |
+        git config --global user.email "github-actions@github.com"
+        git config --global user.name "github-actions"
+        cd data_export
+        git add .
+        git commit -m "Update: ${{ github.event.head_commit.message }}"
+        git push origin HEAD:main
