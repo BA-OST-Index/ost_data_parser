@@ -59,6 +59,7 @@ class TagInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
 
             "name": self.name.to_json(),
             "desc": self.desc.to_json(),
+            "namespace": self.namespace,
             "color": self.color,
             "color_css": self.color_css,
             "used_by": self.used_by.to_json(),
@@ -73,6 +74,7 @@ class TagInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
 
             "name": self.name.to_json(),
             "desc": self.desc.to_json(),
+            "namespace": self.namespace,
             "color": self.color,
             "color_css": self.color_css,
             "interpage": self.get_interpage_data()

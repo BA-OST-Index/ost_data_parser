@@ -10,7 +10,7 @@ from data_model.actual_data.used_by import BaseUsedBy, UsedByRegisterMixin, Orde
 from data_model.actual_data._track.track_version import *
 from data_model.constant.file_type import FILETYPES_STORY, FILETYPES_BATTLE, FILETYPES_BACKGROUND, \
     FILE_VIDEO_INFO, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT, FILE_UI_EVENT, FILE_UI_CHILD
-from data_model.actual_data.tag import TagInfo
+from data_model.actual_data.tag import TagListManager
 from data_model.tool.tool import seconds_to_minutes
 from data_model.tool.interpage import InterpageMixin
 
@@ -172,14 +172,13 @@ class TrackTags(BaseDataModel):
     def __init__(self, key_name, track):
         super().__init__(key_name)
         self.track = track
-        self.tags = LangStringModelList(key_name)
+        self.tags = TagListManager()
 
     def load(self, data):
         super().load(data)
-        for i in data:
-            t = TagInfo.get_instance(instance_id=i.lower())
-            self.tags.append(t)
-            t.register(self.track)
+        self.tags.load(data)
+        for i in self.tags.tag:
+            i.register(self.track)
 
     def to_json(self):
         return self.tags.to_json()
@@ -310,6 +309,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
         self.reference.load(data["reference"])
         self.version.load(data["version"])
         self.image.load(data["image"])
+        self.tags.load(data["tags"]["overall"])
 
     @staticmethod
     def _get_instance_id(data: dict):
