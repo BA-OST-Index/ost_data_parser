@@ -25,7 +25,7 @@ jobs:
     - name: Push changes
       run: |
         git config --global user.email "github-actions@github.com"
-        git config --global user.name "github-actions"
+        git config --global user.name "github-actions[bot]"
         cd ost_data_export
         git add .
         git commit -m "Update: ${{ github.event.head_commit.message }}"
