@@ -1,9 +1,5 @@
 .idea/
 test*.py
-ost_data_export
-ost_data_export/
-data
-data/
 
 # -----------------------------------------
 # From https://github.com/github/gitignore/blob/main/Python.gitignore
