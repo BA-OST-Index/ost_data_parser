@@ -4,9 +4,6 @@ on:
   push:
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,10 +24,10 @@ jobs:
     - name: Push changes
       run: |
         git config --global user.email "github-actions@github.com"
-        git config --global user.name "github-actions[bot]"
+        git config --global user.name "github-actions"
         cd ost_data_export
         git add .
         git commit -m "Update: ${{ github.event.head_commit.message }}"
         git push https://github-actions[bot]:$REPO_KEY@github.com/BA-OST-Index/ost_data_export.git HEAD:main
       env:
-        REPO_KEY: ${{secrets.ACTION_SCRIPT}}
+        REPO_KEY: ${{secrets.GITHUB_TOKEN}}
