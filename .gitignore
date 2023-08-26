@@ -1,5 +1,7 @@
 .idea/
 test*.py
+data_export/
+data/
 
 # -----------------------------------------
 # From https://github.com/github/gitignore/blob/main/Python.gitignore
