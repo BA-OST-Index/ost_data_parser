@@ -330,6 +330,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
             "name": self.name.to_json_basic(),
             "desc": self.desc.to_json_basic(),
             "namespace": self.namespace,
+            "instance_id": self.instance_id,
 
             "release_date": int(self.release_date.timestamp()),
             "release_date_format": self.release_date.strftime("%Y-%m-%d %H:%M:%S"),

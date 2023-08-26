@@ -77,19 +77,19 @@ class StoryInfoPart(IToJson):
 class StoryInfoPartListManager(IToJson):
     def __init__(self, data: list):
         self.part = []
-        self.bgm_battle = None
+        self.bgm_special = []
 
         for i in data:
             p = StoryInfoPart(i)
             try:
                 # Normal case
-                if p.is_battle:
-                    self.bgm_battle = p.track.track[0]
+                if p.is_battle and p.track.track[0] not in self.bgm_special:
+                    self.bgm_special.append(p.track.track[0])
             except Exception:
                 try:
                     # Bond case
-                    if p.is_memory:
-                        self.bgm_memory = p.track.track[0]
+                    if p.is_memory and p.track.track[0] not in self.bgm_special:
+                        self.bgm_special.append(p.track.track[0])
                 except Exception:
                     raise
 
@@ -101,17 +101,5 @@ class StoryInfoPartListManager(IToJson):
     def to_json_basic(self):
         return [part.to_json_basic() for part in self.part]
 
-    def get_bgm_special(self):
-        try:
-            if hasattr(self, "bgm_battle") and self.bgm_battle is not None:
-                return self.bgm_battle
-            else:
-                raise AttributeError
-        except AttributeError:
-            try:
-                if hasattr(self, "bgm_memory") and self.bgm_memory is not None:
-                    return self.bgm_memory
-                else:
-                    raise AttributeError
-            except AttributeError:
-                return None
+    def to_json_basic_tracks(self):
+        return [track.to_json_basic() for track in self.bgm_special]

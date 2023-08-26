@@ -129,6 +129,7 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
         self.profile = schale_db_manager.query("students", self.data, "ProfileIntroduction")
         self.profile_gacha = schale_db_manager.query("students", self.data, "CharacterSSRNew")
         self.hobby = schale_db_manager.query("students", self.data, "Hobby")
+        self.school_id = schale_db_manager.query_constant("students", self.data, "School")
         self.school = schale_db_manager.query("localization",
                                               "School_" + schale_db_manager.query_constant("students", self.data,
                                                                                            "School"))
@@ -168,6 +169,7 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
                 "short": self.school.to_json(),
                 "long": self.school_long.to_json()
             },
+            "school_id": self.school_id,
             "club": self.club.to_json(),
             "age": self.age.to_json(),
             "hobby": self.hobby.to_json(),
@@ -194,6 +196,7 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
             },
             "birthday": self.birthday.to_json_basic(),
             "school": self.school_long.to_json_basic(),
+            "school_id": self.school_id,
             "club": self.club.to_json_basic(),
             "age": self.age.to_json_basic(),
             "hobby": self.hobby.to_json_basic(),

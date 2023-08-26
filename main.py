@@ -1,9 +1,11 @@
 import os
 import json
+import time
 from functools import partial
 
 from data_model.loader.loader_detect import get_loader_by_filepath
 
+start_time = time.time()
 TAGS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\tag", None)
 TRACKS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\track", None)
 BACKGROUNDS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\background", None)
@@ -13,6 +15,7 @@ BATTLES = get_loader_by_filepath(["main"], r"F:\GitFile\BA_OST_Index_Parser\data
 UIS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\ui", None)
 VIDEOS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\video", None)
 EVENTS = get_loader_by_filepath([], r"F:\GitFile\BA_OST_Index_Parser\data\event", None)
+print(f"Linking Stuff Together: {time.time() - start_time:0.2f}")
 
 BASE_EXPORT = "data_export/"
 
@@ -41,6 +44,7 @@ def write_loader2(target_loader):
         dump_json(loader.to_json(), file)
 
 
+start_time = time.time()
 # export tags
 write_loader2(TAGS)
 for i in TAGS.including:
@@ -121,3 +125,4 @@ for event_id in EVENTS.including:
         write_loader2(folder.loader)
         for file in folder.loader.including:
             write_loader(file)
+print(f"Writing stuff: {time.time() - start_time:0.2f}")

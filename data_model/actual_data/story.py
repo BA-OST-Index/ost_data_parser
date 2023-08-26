@@ -30,7 +30,6 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
         self.name = i18n_translator[data["name"]]
         self.pos = storyPosAuto(data["pos"])
         self.part = StoryInfoPartListManager(data["part"])
-        self.bgm_battle = self.part.get_bgm_special()
         self.image = UrlModel()
         self.image.load(self.data["image"])
 
@@ -85,7 +84,7 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
             "is_battle": self.is_battle,
         }
         if self.is_battle:
-            t["bgm_battle"] = self.bgm_battle.to_json_basic()
+            t["bgm_special"] = self.part.to_json_basic_tracks()
         if self.parent_data:
             t["parent_data"] = self.parent_data_to_json()
         return t
@@ -105,7 +104,7 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
             "is_battle": self.is_battle,
         }
         if self.is_battle:
-            t["bgm_battle"] = self.bgm_battle.to_json_basic()
+            t["bgm_special"] = self.part.to_json_basic_tracks()
         if self.parent_data:
             t["parent_data"] = self.parent_data_to_json()
         return t
@@ -177,7 +176,6 @@ class StoryInfoBond(StoryInfo):
         # To avoid that when creating a student's bond story,
         # it can't find itself since it's in the process of being created.
         self.part = StoryInfoPartListManager(self.data["part"])
-        self.bgm_memory = self.part.get_bgm_special()
 
         self.extra_register()
 
@@ -203,7 +201,7 @@ class StoryInfoBond(StoryInfo):
         }
 
         if self.is_memory:
-            t["bgm_bond"] = self.bgm_memory.to_json_basic()
+            t["bgm_special"] = self.part.to_json_basic_tracks()
         try:
             t["parent_data"] = self.parent_data_to_json()
         except AttributeError:
