@@ -32,5 +32,5 @@ jobs:
         git add .
         git commit -m "Update: ${{ github.event.head_commit.message }}"
         git push https://github-actions[bot]:$REPO_KEY@github.com/BA-OST-Index/ost_data_export.git
-       env:
+      env:
         REPO_KEY: ${{secrets.ACTION_SCRIPT}}
