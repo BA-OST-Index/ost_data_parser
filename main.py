@@ -8,7 +8,7 @@ from data_model.loader.loader_detect import get_loader_by_filepath
 start_time = time.time()
 TAGS = get_loader_by_filepath([], r"data/tag", None)
 TRACKS = get_loader_by_filepath([], r"data/track", None)
-BACKGROUNDS = get_loader_by_filepath([], r"data\background", None)
+BACKGROUNDS = get_loader_by_filepath([], r"data/background", None)
 CHARACTERS = get_loader_by_filepath([], r"data/character", None)
 STORIES = get_loader_by_filepath(["main"], r"data/main/story", None)
 BATTLES = get_loader_by_filepath(["main"], r"data/main/battle", None)

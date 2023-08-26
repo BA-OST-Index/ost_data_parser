@@ -1,6 +1,8 @@
 .idea/
 test*.py
+data_export
 data_export/
+data
 data/
 
 # -----------------------------------------
