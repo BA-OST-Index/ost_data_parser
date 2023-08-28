@@ -1,6 +1,7 @@
 import os
 import json
 import time
+import shutil
 from functools import partial
 
 from data_model.loader.loader_detect import get_loader_by_filepath
@@ -17,10 +18,18 @@ VIDEOS = get_loader_by_filepath([], r"data/video", None)
 EVENTS = get_loader_by_filepath([], r"data/event", None)
 print(f"Linking Stuff Together: {time.time() - start_time:0.2f}")
 
-BASE_EXPORT = "data_export/"
+BASE_EXPORT = "data_export"
 
 join_base = partial(os.path.join, BASE_EXPORT)
 dump_json = partial(json.dump, ensure_ascii=False)
+
+# deleting old files
+start_time = time.time()
+for i in os.listdir(BASE_EXPORT):
+    if i.startswith("."):
+        continue
+    shutil.rmtree(join_base(i))
+print(f"Deleting Old Files: {time.time() - start_time:0.2f}")
 
 
 def create_export_dir(loader):
@@ -35,6 +44,7 @@ def write_loader(target_loader):
     create_export_dir(loader)
     with open(join_base(path), mode="w", encoding="UTF-8") as file:
         dump_json(loader.to_json(), file)
+
 
 def write_loader2(target_loader):
     loader = target_loader

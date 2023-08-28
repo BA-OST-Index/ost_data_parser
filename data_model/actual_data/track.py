@@ -14,7 +14,7 @@ from data_model.constant.file_type import FILETYPES_STORY, FILETYPES_BATTLE, FIL
 from data_model.actual_data.tag import TagListManager
 from data_model.tool.tool import seconds_to_minutes
 from data_model.tool.interpage import InterpageMixin
-from collections import OrderedDict
+from ..tool.tool import counter_dict_sorter
 
 __all__ = ["TrackInfo", "TrackListManager"]
 
@@ -78,9 +78,8 @@ class TrackUsedBy(BaseUsedBy, UsedByToJsonMixin):
 
     def to_json(self, no_used_by: bool = True):
         d = super().to_json()
-        d["data_character"] = self.data_character.get_counter_with_data_sorted_by_counter()
-        d["data_character"] = OrderedDict((key, [value[0].to_json_basic(), value[1]])
-                                          for key, value in d["data_character"].items())
+        d["data_character"] = counter_dict_sorter(self.data_character.get_counter_with_data_sorted_by_counter(),
+                                                  [["name", "path_name"], ["name", "en"]])
         return d
 
 

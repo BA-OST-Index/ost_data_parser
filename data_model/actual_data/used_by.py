@@ -20,7 +20,6 @@ class UsedByRegisterMixin:
 
 
 class UsedByToJsonMixin(IToJson):
-    # TODO: 针对Track的编号进行特殊优化
     def to_json(self, no_used_by: bool = True):
         d = {}
         for i in self._components:

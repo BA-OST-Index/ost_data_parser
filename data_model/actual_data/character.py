@@ -4,7 +4,7 @@ from ..constant.file_type import FILETYPES_STORY, FILETYPES_TRACK, FILE_STORY_EV
 from ..types.metatype.base_model import BaseDataModelListManager
 from ..types.url import UrlModel
 from ..tool.interpage import InterpageMixin
-from collections import OrderedDict
+from ..tool.tool import counter_dict_sorter
 
 
 class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
@@ -28,9 +28,8 @@ class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
 
     def to_json(self, no_used_by: bool = True):
         d = super().to_json()
-        d["data_track"] = self.data_track.get_counter_with_data_sorted_by_counter()
-        d["data_track"] = OrderedDict((key, [value[0].to_json_basic(), value[1]])
-                                      for key, value in d["data_track"].items())
+        d["data_track"] = counter_dict_sorter(self.data_track.get_counter_with_data_sorted_by_counter(),
+                                              ["track_type", "no"])
         return d
 
 

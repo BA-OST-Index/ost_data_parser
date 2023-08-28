@@ -5,6 +5,7 @@ from ..types.metatype.base_model import BaseDataModelListManager
 from ..types.url import UrlModel
 from ..actual_data.tag import TagListManager
 from ..tool.interpage import InterpageMixin
+from ..tool.tool import counter_dict_sorter
 
 
 class BackgroundUsedBy(BaseUsedBy, UsedByToJsonMixin):
@@ -28,6 +29,12 @@ class BackgroundUsedBy(BaseUsedBy, UsedByToJsonMixin):
                 self.data_track[instance_id] = file_loader
         else:
             raise ValueError
+
+    def to_json(self, no_used_by: bool = True):
+        d = super().to_json()
+        d["data_track"] = counter_dict_sorter(self.data_track.get_counter_with_data_sorted_by_counter(),
+                                              ["track_type", "no"])
+        return d
 
 
 class BackgroundInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
