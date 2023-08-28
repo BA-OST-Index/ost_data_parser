@@ -9,18 +9,20 @@ from data_model.loader.manager_constant import constant_manager
 from data_model.actual_data.used_by import BaseUsedBy, UsedByRegisterMixin, OrderedDictWithCounter, UsedByToJsonMixin
 from data_model.actual_data._track.track_version import *
 from data_model.constant.file_type import FILETYPES_STORY, FILETYPES_BATTLE, FILETYPES_BACKGROUND, \
-    FILE_VIDEO_INFO, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT, FILE_UI_EVENT, FILE_UI_CHILD
+    FILE_VIDEO_INFO, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT, FILE_UI_EVENT, FILE_UI_CHILD, \
+    FILETYPES_CHARACTER, FILE_STUDENT_INFO
 from data_model.actual_data.tag import TagListManager
 from data_model.tool.tool import seconds_to_minutes
 from data_model.tool.interpage import InterpageMixin
+from collections import OrderedDict
 
 __all__ = ["TrackInfo", "TrackListManager"]
 
 
 class TrackUsedBy(BaseUsedBy, UsedByToJsonMixin):
     SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_BATTLE, *FILETYPES_BACKGROUND, FILE_VIDEO_INFO,
-                          FILE_STORY_EVENT, FILE_BATTLE_EVENT, FILE_UI_EVENT, FILE_UI_CHILD]
-    _components = ["data_background", "data_story", "data_battle", "data_ui", "data_video"]
+                          FILE_STORY_EVENT, FILE_BATTLE_EVENT, FILE_UI_EVENT, FILE_UI_CHILD, *FILETYPES_CHARACTER]
+    _components = ["data_background", "data_story", "data_battle", "data_ui", "data_video", "data_character"]
 
     def __init__(self):
         self.data_background = OrderedDictWithCounter()
@@ -28,26 +30,27 @@ class TrackUsedBy(BaseUsedBy, UsedByToJsonMixin):
         self.data_battle = OrderedDictWithCounter()
         self.data_ui = OrderedDictWithCounter()
         self.data_video = OrderedDictWithCounter()
+        self.data_character = OrderedDictWithCounter()
 
     def register(self, file_loader: FileLoader):
-        filetype = file_loader.filetype
+        try: filetype = file_loader.filetype
+        except AttributeError:
+            # currently, only students don't have a filetype
+            filetype = FILE_STUDENT_INFO
         instance_id = file_loader.instance_id
         if filetype in self.SUPPORTED_FILETYPE:
             if filetype in [*FILETYPES_STORY, FILE_STORY_EVENT]:
-                if instance_id not in self.data_story.keys():
-                    self.data_story[instance_id] = file_loader
+                self.data_story[instance_id] = file_loader
             elif filetype in [*FILETYPES_BATTLE, FILE_BATTLE_EVENT]:
-                if instance_id not in self.data_battle.keys():
-                    self.data_battle[instance_id] = file_loader
+                self.data_battle[instance_id] = file_loader
             elif filetype in [FILE_UI_EVENT, FILE_UI_CHILD]:
-                if instance_id not in self.data_ui.keys():
-                    self.data_ui[instance_id] = file_loader
+                self.data_ui[instance_id] = file_loader
             elif filetype in FILETYPES_BACKGROUND:
-                if instance_id not in self.data_background.keys():
-                    self.data_background[instance_id] = file_loader
+                self.data_background[instance_id] = file_loader
             elif filetype == FILE_VIDEO_INFO:
-                if instance_id not in self.data_video.keys():
-                    self.data_video[instance_id] = file_loader
+                self.data_video[instance_id] = file_loader
+            elif filetype in FILETYPES_CHARACTER:
+                self.data_character[instance_id] = file_loader
         else:
             raise ValueError
 
@@ -73,6 +76,13 @@ class TrackUsedBy(BaseUsedBy, UsedByToJsonMixin):
         return {"is_story": is_story, "is_battle": is_battle,
                 "is_bond_memory": is_bond_memory, "is_event": is_event}
 
+    def to_json(self, no_used_by: bool = True):
+        d = super().to_json()
+        d["data_character"] = self.data_character.get_counter_with_data_sorted_by_counter()
+        d["data_character"] = OrderedDict((key, [value[0].to_json_basic(), value[1]])
+                                          for key, value in d["data_character"].items())
+        return d
+
 
 class ComposerUsedBy(BaseUsedBy, UsedByToJsonMixin):
     SUPPORTED_FILETYPE = [*FILETYPES_TRACK]
@@ -86,8 +96,7 @@ class ComposerUsedBy(BaseUsedBy, UsedByToJsonMixin):
         instance_id = file_loader.instance_id
         if filetype in self.SUPPORTED_FILETYPE:
             if filetype in FILETYPES_TRACK:
-                if instance_id not in self.data_track.keys():
-                    self.data_track[instance_id] = file_loader
+                self.data_track[instance_id] = file_loader
         else:
             raise ValueError
 

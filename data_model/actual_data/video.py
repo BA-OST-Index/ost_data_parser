@@ -35,7 +35,7 @@ class VideoInfo(FileLoader, InterpageMixin):
             "filetype": self.filetype,
             "namespace": self.namespace,
             "name": self.name.to_json_basic(),
-            "desc": self.name.to_json_basic(),
+            "desc": self.desc.to_json_basic(),
             "image": self.image.to_json_basic(),
             "version": self.version.to_json_basic(),
             "track": self.track.to_json_basic(),

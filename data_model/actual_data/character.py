@@ -4,6 +4,7 @@ from ..constant.file_type import FILETYPES_STORY, FILETYPES_TRACK, FILE_STORY_EV
 from ..types.metatype.base_model import BaseDataModelListManager
 from ..types.url import UrlModel
 from ..tool.interpage import InterpageMixin
+from collections import OrderedDict
 
 
 class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
@@ -19,13 +20,18 @@ class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
         instance_id = file_loader.instance_id
         if filetype in self.SUPPORTED_FILETYPE:
             if filetype in [*FILETYPES_STORY, FILE_STORY_EVENT]:
-                if instance_id not in self.data_story.keys():
-                    self.data_story[instance_id] = file_loader
+                self.data_story[instance_id] = file_loader
             elif filetype in FILETYPES_TRACK:
-                if instance_id not in self.data_track.keys():
-                    self.data_track[instance_id] = file_loader
+                self.data_track[instance_id] = file_loader
         else:
             raise ValueError
+
+    def to_json(self, no_used_by: bool = True):
+        d = super().to_json()
+        d["data_track"] = self.data_track.get_counter_with_data_sorted_by_counter()
+        d["data_track"] = OrderedDict((key, [value[0].to_json_basic(), value[1]])
+                                      for key, value in d["data_track"].items())
+        return d
 
 
 class CharacterInfo(FileLoader, InterpageMixin):
@@ -150,6 +156,7 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
 
     def to_json(self):
         return {
+            "uuid": self.path_name,
             "name": {
                 "path_name": self.path_name,
                 "dev_name": self.dev_name,
@@ -183,6 +190,7 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
 
     def to_json_basic(self):
         return {
+            "uuid": self.path_name,
             "name": {
                 "path_name": self.path_name,
                 "dev_name": self.dev_name,

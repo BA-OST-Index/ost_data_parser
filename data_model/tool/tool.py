@@ -50,6 +50,12 @@ class OrderedDictWithCounter:
         return OrderedDict((key, [value, self.counter[key]])
                            for key, value in self.ordered_dict.items())
 
+    def get_counter_with_data_sorted_by_counter(self, reverse: bool = True):
+        temp = [[key, [value, self.counter[key]]]
+                for key, value in self.ordered_dict.items()]
+        temp.sort(key=lambda i: i[1][1], reverse=reverse)
+        return OrderedDict((i[0], i[1]) for i in temp)
+
     def keys(self):
         return self.ordered_dict.keys()
 

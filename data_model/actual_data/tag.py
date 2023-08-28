@@ -19,11 +19,9 @@ class TagUsedBy(BaseUsedBy, UsedByToJsonMixin):
         instance_id = file_loader.instance_id
         if filetype in self.SUPPORTED_FILETYPE:
             if filetype in FILETYPES_TRACK:
-                if instance_id not in self.data_track.keys():
-                    self.data_track[instance_id] = file_loader
+                self.data_track[instance_id] = file_loader
             elif filetype in FILETYPES_BACKGROUND:
-                if instance_id not in self.data_background.keys():
-                    self.data_background[instance_id] = file_loader
+                self.data_background[instance_id] = file_loader
         else:
             raise ValueError
 

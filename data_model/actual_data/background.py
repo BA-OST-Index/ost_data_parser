@@ -23,11 +23,9 @@ class BackgroundUsedBy(BaseUsedBy, UsedByToJsonMixin):
         instance_id = file_loader.instance_id
         if filetype in self.SUPPORTED_FILETYPE:
             if filetype in [*FILETYPES_STORY, FILE_STORY_EVENT]:
-                if instance_id not in self.data_story.keys():
-                    self.data_story[instance_id] = file_loader
+                self.data_story[instance_id] = file_loader
             elif filetype in FILETYPES_TRACK:
-                if instance_id not in self.data_track.keys():
-                    self.data_track[instance_id] = file_loader
+                self.data_track[instance_id] = file_loader
         else:
             raise ValueError
 

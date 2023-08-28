@@ -35,6 +35,7 @@ class StoryInfoPart(IToJson):
         for char in self.character.character:
             for track in self.track.track:
                 char.register(track)
+                track.register(char)
 
         # For BackgroundInfo
         # if there's only one background, then:
