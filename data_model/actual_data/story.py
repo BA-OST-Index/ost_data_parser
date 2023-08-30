@@ -47,13 +47,22 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
 
     def extra_register(self):
         # Register itself to every track in StoryInfoPartListManager
+        # For every story (not story parts) it should only be registered for once
+        registered = []
+
         for part in self.part.part:
             for track in part.track.track:
-                track.register(self)
+                if track not in registered:
+                    track.register(self)
+                    registered.append(track)
             for char in part.character.character:
-                char.register(self)
+                if char not in registered:
+                    char.register(self)
+                    registered.append(char)
             for background in part.background.background:
-                background.register(self)
+                if background not in registered:
+                    background.register(self)
+                    registered.append(background)
 
     @staticmethod
     def _get_instance_id(data: dict):
