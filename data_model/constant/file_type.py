@@ -33,6 +33,8 @@ FILE_TAG_INFO = 61
 
 FILE_BACKGROUND_INFO = 71
 
+FILE_VIRTUAL_DATA = 81
+
 # JSON file `_all.json`, for managing different folders
 FILE_DIR_ROOT = -10  # /data/all.json
 FILE_DIR_TRACK_ALL = -11  # /data/track

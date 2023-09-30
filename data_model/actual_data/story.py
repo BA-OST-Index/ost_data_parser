@@ -64,6 +64,58 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
                     background.register(self)
                     registered.append(background)
 
+        # 各个StoryPart里头的register
+        # 基本上相当于把 StoryPartInfo.extra_register 给取代了
+        registered = {}
+
+        for part in self.part.part:
+            # For CharacterInfo
+            # register every TrackInfo to CharacterInfo
+            for char in part.character.character:
+                for track in part.track.track:
+                    if char not in registered.keys(): registered[char] = []
+                    if track not in registered.keys(): registered[track] = []
+
+                    if track not in registered[char]:
+                        char.register(track)
+                        registered[char].append(track)
+                    if char not in registered[track]:
+                        track.register(char)
+                        registered[track].append(char)
+
+                # For BackgroundInfo
+                # if there's only one background, then:
+                #   - register this BackgroundInfo to every TrackInfo
+                #   - register every TrackInfo to this BackgroundInfo
+                if len(part.background.background) == 1:
+                    background = part.background.background[0]
+                    if background not in registered.keys(): registered[background] = []
+
+                    for track in part.track.track:
+                        if track not in registered.keys(): registered[track] = []
+
+                        if track not in registered[background]:
+                            background.register(track)
+                            registered[background].append(track)
+                        if background not in registered[track]:
+                            track.register(background)
+                            registered[track].append(background)
+
+                # For TrackInfo
+                # if there's only one track, then:
+                #   - register this TrackInfo to every BackgroundInfo
+                if len(part.track.track) == 1:
+                    track = part.track.track[0]
+                    if track not in registered.keys(): registered[track] = []
+
+                    for background in part.background.background:
+                        if background not in registered.keys(): registered[background] = []
+
+                        if track not in registered[background]:
+                            background.register(track)
+                            registered[background].append(track)
+
+
     @staticmethod
     def _get_instance_id(data: dict):
         story_type = StoryInfo._story_type[data["filetype"]]
@@ -91,6 +143,7 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
 
             "part": self.part.to_json(),
             "is_battle": self.is_battle,
+            "interpage": self.get_interpage_data()
         }
         if self.is_battle:
             t["bgm_special"] = self.part.to_json_basic_tracks()
@@ -99,63 +152,44 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
         return t
 
     def to_json_basic(self):
-        t = {
-            "uuid": self.uuid,
-            "filetype": self.filetype,
-
-            "name": self.name.to_json_basic(),
-            "desc": [i for i in self.desc.to_json_basic()],
-            "pos": self.pos.to_json_basic(),
-            "image": self.image.to_json_basic(),
-            "instance_id": self.instance_id,
-
-            "part": self.part.to_json(),
-            "is_battle": self.is_battle,
-        }
-        if self.is_battle:
-            t["bgm_special"] = self.part.to_json_basic_tracks()
-        if self.parent_data:
-            t["parent_data"] = self.parent_data_to_json()
-        return t
+        return self.to_json()
 
     @classmethod
     def get_instance(cls, instance_id):
         return super().get_instance(instance_id)
 
     def _get_instance_offset(self, offset: int):
-        pos = self.instance_id.split("_")
+        instances_list = list(self._instance.keys())
+        self_instance_pos = instances_list.index(self.instance_id)
 
-        # event/bond story
-        if len(pos) == 3:
-            segment_id = int(pos[-1]) + offset
-            try:
-                return self._instance["_".join([*pos[:-1], str(segment_id)])]
-            except KeyError:
+        if self_instance_pos == 0:
+            if offset < 0:
                 return None
 
-        # main/other/short story
-        chapter_id, segment_id = int(pos[-2]), int(pos[-1])
-        try:
-            return self._instance["_".join([pos[:-2], str(chapter_id), str(segment_id + offset)])]
-        except KeyError:
-            pass
-        # if it's the end of the chapter
-        if offset > 0:
-            try:
-                return self._instance["_".join([pos[:-2], str(chapter_id + 1), "1"])]
-            except KeyError:
-                return None
-        # if it's the beginning of the chapter
-        if offset < 0:
-            # we'll have to figure out where it ends
-            # because different chapters in different volumes can have varied numbers of segments
-            for i in range(40, 19, -1):
-                try:
-                    return self._instance["_".join([pos[:-2], str(chapter_id - 1), str(i)])]
-                except KeyError:
-                    pass
-            # i guess i have no idea what to do
+        try: instance = self._instance[instances_list[self_instance_pos + offset]]
+        except (KeyError, IndexError):
             return None
+
+        if instance.filetype != self.filetype:
+            # 故事类型不一致
+            return None
+
+        # 获取pos
+        pos_value = self.pos.get_all_pos()
+        # 根据不同的pos区分
+        if len(pos_value) == 2:
+            # event_id/character不一样
+            if pos_value[0] != instance.pos.get_all_pos()[0]:
+                return None
+        elif len(pos_value) == 3:
+            # volume 不一样
+            if pos_value[0] != instance.pos.get_all_pos()[0]:
+                return None
+            # chapter 不一样
+            if pos_value[1] != instance.pos.get_all_pos()[1]:
+                return None
+
+        return instance
 
 
 class StoryInfoBond(StoryInfo):

@@ -1,6 +1,7 @@
 import abc
 import os
 import json
+import hashlib
 from collections import namedtuple
 from ..config import DATA_BASE_PATH
 from ..tool.tool import NamespacePathMixin, SingletonInstanceMixin
@@ -9,6 +10,7 @@ from ..types.metatype.base_type import Integer
 from ..types.metatype.complex import UUID
 from ..loader import i18n_translator
 from ..tool.parent_data import ParentDataMixin, ParentData
+from ..constant.file_type import FILE_VIRTUAL_DATA
 
 IncludingInfo = namedtuple("IncludingInfo", ["name", "loader"])
 
@@ -127,3 +129,45 @@ class FileLoader(BaseLoader, SingletonInstanceMixin, NamespacePathMixin, IToJson
     @abc.abstractmethod
     def to_json_basic(self):
         pass
+
+
+class VirtualLoader(BaseLoader, NamespacePathMixin):
+    """一种用于二次处理数据的特殊Loader，在所有数据载入后再进行。"""
+
+    @abc.abstractmethod
+    def __init__(self, loader_name: str, template_path, page_path):
+        def uuid_gen(string: str):
+            md5 = hashlib.md5(string.encode("UTF-8")).hexdigest()
+            uuid = "-".join([md5[0:8], md5[8:12], md5[12:16], md5[16:20], md5[20:32]])
+            return uuid
+
+        BaseLoader.__init__(self,
+                            {
+                                "uuid": uuid_gen(loader_name),
+                                "filetype": FILE_VIRTUAL_DATA,
+                                "name": f"[VIRTUAL_{loader_name.upper()}_NAME]",
+                                "desc": f"[VIRTUAL_{loader_name.upper()}_DESC]"
+                            },
+                            ["virtual_data", loader_name + ".json"])
+        self.template_path = template_path
+        self.page_path = page_path
+
+        self.load_data()
+
+    @abc.abstractmethod
+    def load_data(self):
+        pass
+
+    @abc.abstractmethod
+    def to_json(self):
+        return {
+            "uuid": self.data["uuid"],
+            "filetype": self.data["filetype"],
+            "name": i18n_translator.query(self.data["name"]).to_json(),
+            "desc": i18n_translator.query(self.data["desc"]).to_json(),
+            "template_path": self.template_path,
+            "page_path": self.page_path
+        }
+
+    def to_json_basic(self):
+        return self.to_json()

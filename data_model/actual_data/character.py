@@ -15,14 +15,19 @@ class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
         self.data_story = OrderedDictWithCounter()
         self.data_track = OrderedDictWithCounter()
 
-    def register(self, file_loader: FileLoader):
+    def register(self, file_loader: FileLoader, count_increase=True):
         filetype = file_loader.filetype
         instance_id = file_loader.instance_id
+
         if filetype in self.SUPPORTED_FILETYPE:
             if filetype in [*FILETYPES_STORY, FILE_STORY_EVENT]:
                 self.data_story[instance_id] = file_loader
+                if not count_increase:
+                    self.data_story.counter_adjust(instance_id, -1)
             elif filetype in FILETYPES_TRACK:
                 self.data_track[instance_id] = file_loader
+                if not count_increase:
+                    self.data_track.counter_adjust(instance_id, -1)
         else:
             raise ValueError
 
@@ -41,11 +46,11 @@ class CharacterInfo(FileLoader, InterpageMixin):
         instance_id = instance_id.upper()
         try:
             # If it's a student
-            temp = super().get_instance(instance_id="STU_"+instance_id)
+            temp = super().get_instance(instance_id="STU_" + instance_id)
         except Exception:
             try:
                 # Otherwise it must be an NPC
-                temp = super().get_instance(instance_id="NPC_"+instance_id)
+                temp = super().get_instance(instance_id="NPC_" + instance_id)
             except Exception:
                 raise
             else:
@@ -115,7 +120,6 @@ class NpcInfo(CharacterInfo, UsedByRegisterMixin):
         return super().get_instance(instance_id)
 
 
-
 class StudentInfo(CharacterInfo, UsedByRegisterMixin):
     def __init__(self, **kwargs):
         # Do not add super() here as the `data` is only a string instead of a dict
@@ -144,8 +148,22 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
                                                                                                     "School"))
         self.club = schale_db_manager.query("localization",
                                             "Club_" + schale_db_manager.query_constant("students", self.data, "Club"))
+        self.squad_type = schale_db_manager.query("localization",
+                                                  "SquadType_" + schale_db_manager.query_constant("students", self.data,
+                                                                                                  "SquadType"))
+        self.attack_type = schale_db_manager.query("localization",
+                                                   "BulletType_" + schale_db_manager.query_constant("students",
+                                                                                                    self.data,
+                                                                                                    "BulletType"))
+        self.armor_type = schale_db_manager.query("localization",
+                                                  "ArmorType_" + schale_db_manager.query_constant("students", self.data,
+                                                                                                  "ArmorType"))
         self.collection_bg = schale_db_manager.query_constant("students", self.data, "CollectionBG")
-        self.collection_texture = schale_db_manager.query_constant("students", self.data, "CollectionTexture")
+
+        self._id = schale_db_manager.query_constant("students", self.data, "Id")
+        self._squad_type = schale_db_manager.query_constant("students", self.data, "SquadType")
+        self._attack_type = schale_db_manager.query_constant("students", self.data, "BulletType")
+        self._armor_type = schale_db_manager.query_constant("students", self.data, "ArmorType")
 
         self.used_by = CharacterUsedBy()
 
@@ -156,6 +174,7 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
     def to_json(self):
         return {
             "uuid": self.path_name,
+            "id": self._id,
             "name": {
                 "path_name": self.path_name,
                 "dev_name": self.dev_name,
@@ -183,13 +202,28 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
             "interpage": self.get_interpage_data(),
             "image": {
                 "collection_bg": self.collection_bg,
-                "collection_texture": self.collection_texture
+                "collection_texture": str(self._id)  # deprecated by SchaleDB
+            },
+            "combatant_info": {
+                "squad_type": {
+                    "type": self._squad_type,
+                    "lang": self.squad_type.to_json()
+                },
+                "attack_type": {
+                    "type": self._attack_type,
+                    "lang": self.attack_type.to_json()
+                },
+                "armor_type": {
+                    "type": self._armor_type,
+                    "lang": self.armor_type.to_json()
+                }
             }
         }
 
     def to_json_basic(self):
         return {
             "uuid": self.path_name,
+            "id": self._id,
             "name": {
                 "path_name": self.path_name,
                 "dev_name": self.dev_name,
@@ -199,7 +233,7 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
             },
             "image": {
                 "collection_bg": self.collection_bg,
-                "collection_texture": self.collection_texture
+                "collection_texture": str(self._id)  # deprecated by SchaleDB
             },
             "birthday": self.birthday.to_json_basic(),
             "school": self.school_long.to_json_basic(),
@@ -207,7 +241,21 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
             "club": self.club.to_json_basic(),
             "age": self.age.to_json_basic(),
             "hobby": self.hobby.to_json_basic(),
-            "interpage": self.get_interpage_data()
+            "interpage": self.get_interpage_data(),
+            "combatant_info": {
+                "squad_type": {
+                    "type": self._squad_type,
+                    "lang": self.squad_type.to_json()
+                },
+                "attack_type": {
+                    "type": self._attack_type,
+                    "lang": self.attack_type.to_json()
+                },
+                "armor_type": {
+                    "type": self._armor_type,
+                    "lang": self.armor_type.to_json()
+                }
+            }
         }
 
     @classmethod
@@ -237,10 +285,21 @@ class CharacterListManager(BaseDataModelListManager):
     def __init__(self, key_name="character"):
         super().__init__(key_name)
         self.character = []
+        self.leader_pos = 0
 
     def load(self, data: list):
         super().load(data)
+
+        # 最后一项的编号为领队
+        try:
+            if data[-1].startswith("L"):
+                self.leader_pos = int(data[-1][1:])
+        except IndexError:
+            # 未填写战斗人员信息
+            pass
+
         for i in data:
+            if i.startswith("L"): continue
             self.character.append(StudentInfo.get_instance(i))
 
     def to_json(self):

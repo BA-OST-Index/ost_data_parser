@@ -49,7 +49,12 @@ class UiInfo(FileLoader, IParentData, InterpageMixin):
         try:
             if curr_index == 0 and offset < 0:
                 return None
-            return self._instance[keys[curr_index + offset]]
+            instance = self._instance[keys[curr_index + offset]]
+
+            # 仅索引自己这一类的instance（比方说普通UI/活动UI）
+            if instance.filetype != self.filetype:
+                return None
+            return instance
         except (IndexError, KeyError):
             return None
 
@@ -79,3 +84,12 @@ class UiInfoEvent(UiInfo):
             "parent_data": self.parent_data_to_json(),
             "interpage": self.get_interpage_data()
         }
+
+    def _get_instance_offset(self, offset: int):
+        instance = super()._get_instance_offset(offset)
+        if instance is not None:
+            # 如果同样是 UiInfoEvent 对象
+            if instance.event_id != self.event_id:
+                # 如果不是一个 event 里头的
+                return None
+        return instance

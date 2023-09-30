@@ -19,9 +19,11 @@ class StoryInfoPart(IToJson):
         if "is_battle" in data.keys():
             # For normal case
             self.is_battle = data["is_battle"]
+            self.battle_leader_pos = self.character.leader_pos
         elif "is_memory" in data.keys():
             # For bond case
             self.is_memory = data["is_memory"]
+            self.is_momotalk = data["is_momotalk"]
 
         self.track.load(self.data["track"])
         self.character.load(self.data["character"])
@@ -34,8 +36,8 @@ class StoryInfoPart(IToJson):
         # register every TrackInfo to CharacterInfo
         for char in self.character.character:
             for track in self.track.track:
-                char.register(track)
-                track.register(char)
+                char.register(track, False)
+                track.register(char, False)
 
         # For BackgroundInfo
         # if there's only one background, then:
@@ -44,8 +46,8 @@ class StoryInfoPart(IToJson):
         if len(self.background.background) == 1:
             background = self.background.background[0]
             for track in self.track.track:
-                track.register(background)
-                background.register(track)
+                track.register(background, False)
+                background.register(track, False)
 
         # For TrackInfo
         # if there's only one track, then:
@@ -53,7 +55,7 @@ class StoryInfoPart(IToJson):
         if len(self.track.track) == 1:
             track = self.track.track[0]
             for background in self.background.background:
-                background.register(track)
+                background.register(track, False)
 
     def to_json_basic(self):
         d = {"name": self.name.to_json_basic(),
@@ -69,8 +71,10 @@ class StoryInfoPart(IToJson):
 
         if "is_battle" in self.data.keys():
             d["is_battle"] = self.is_battle
+            d["battle_leader_pos"] = self.battle_leader_pos
         elif "is_memory" in self.data.keys():
             d["is_memory"] = self.is_memory
+            d["is_momotalk"] = self.is_momotalk
 
         return d
 

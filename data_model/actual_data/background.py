@@ -19,14 +19,19 @@ class BackgroundUsedBy(BaseUsedBy, UsedByToJsonMixin):
         self.data_story = OrderedDictWithCounter()
         self.data_track = OrderedDictWithCounter()
 
-    def register(self, file_loader: FileLoader):
+    def register(self, file_loader: FileLoader, count_increase=True):
         filetype = file_loader.filetype
         instance_id = file_loader.instance_id
+
         if filetype in self.SUPPORTED_FILETYPE:
             if filetype in [*FILETYPES_STORY, FILE_STORY_EVENT]:
                 self.data_story[instance_id] = file_loader
+                if not count_increase:
+                    self.data_story.counter_adjust(instance_id, -1)
             elif filetype in FILETYPES_TRACK:
                 self.data_track[instance_id] = file_loader
+                if not count_increase:
+                    self.data_track.counter_adjust(instance_id, -1)
         else:
             raise ValueError
 

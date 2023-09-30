@@ -32,25 +32,39 @@ class TrackUsedBy(BaseUsedBy, UsedByToJsonMixin):
         self.data_video = OrderedDictWithCounter()
         self.data_character = OrderedDictWithCounter()
 
-    def register(self, file_loader: FileLoader):
+    def register(self, file_loader: FileLoader, count_increase=True):
         try: filetype = file_loader.filetype
         except AttributeError:
             # currently, only students don't have a filetype
             filetype = FILE_STUDENT_INFO
+
         instance_id = file_loader.instance_id
+
         if filetype in self.SUPPORTED_FILETYPE:
             if filetype in [*FILETYPES_STORY, FILE_STORY_EVENT]:
                 self.data_story[instance_id] = file_loader
+                if not count_increase:
+                    self.data_story.counter_adjust(instance_id, -1)
             elif filetype in [*FILETYPES_BATTLE, FILE_BATTLE_EVENT]:
                 self.data_battle[instance_id] = file_loader
+                if not count_increase:
+                    self.data_battle.counter_adjust(instance_id, -1)
             elif filetype in [FILE_UI_EVENT, FILE_UI_CHILD]:
                 self.data_ui[instance_id] = file_loader
+                if not count_increase:
+                    self.data_ui.counter_adjust(instance_id, -1)
             elif filetype in FILETYPES_BACKGROUND:
                 self.data_background[instance_id] = file_loader
+                if not count_increase:
+                    self.data_background.counter_adjust(instance_id, -1)
             elif filetype == FILE_VIDEO_INFO:
                 self.data_video[instance_id] = file_loader
+                if not count_increase:
+                    self.data_video.counter_adjust(instance_id, -1)
             elif filetype in FILETYPES_CHARACTER:
                 self.data_character[instance_id] = file_loader
+                if not count_increase:
+                    self.data_character.counter_adjust(instance_id, -1)
         else:
             raise ValueError
 
@@ -90,12 +104,14 @@ class ComposerUsedBy(BaseUsedBy, UsedByToJsonMixin):
     def __init__(self):
         self.data_track = OrderedDictWithCounter()
 
-    def register(self, file_loader: FileLoader):
+    def register(self, file_loader: FileLoader, count_increase=True):
         filetype = file_loader.filetype
         instance_id = file_loader.instance_id
         if filetype in self.SUPPORTED_FILETYPE:
             if filetype in FILETYPES_TRACK:
                 self.data_track[instance_id] = file_loader
+                if not count_increase:
+                    self.data_track.counter_adjust(instance_id, -1)
         else:
             raise ValueError
 

@@ -5,6 +5,7 @@ import shutil
 from functools import partial
 
 from data_model.loader.loader_detect import get_loader_by_filepath
+from data_model.actual_data.virtual_loader import *
 
 start_time = time.time()
 TAGS = get_loader_by_filepath([], r"data/tag", None)
@@ -16,6 +17,7 @@ BATTLES = get_loader_by_filepath(["main"], r"data/main/battle", None)
 UIS = get_loader_by_filepath([], r"data/ui", None)
 VIDEOS = get_loader_by_filepath([], r"data/video", None)
 EVENTS = get_loader_by_filepath([], r"data/event", None)
+FolderLoaderAccesser(TAGS, TRACKS, BACKGROUNDS, CHARACTERS, STORIES, BATTLES, UIS, VIDEOS, EVENTS)
 print(f"Linking Stuff Together: {time.time() - start_time:0.2f}")
 
 BASE_EXPORT = "data_export"
@@ -51,6 +53,14 @@ def write_loader2(target_loader):
     path = loader.get_path(filename=False)
     os.makedirs(join_base(path), exist_ok=True)
     with open(join_base(path, "_all.json"), mode="w", encoding="UTF-8") as file:
+        dump_json(loader.to_json(), file)
+
+
+def write_loader3(target_loader):
+    loader = target_loader
+    path = loader.get_path(filename=False)
+    os.makedirs(join_base(os.path.split(path)[0]), exist_ok=True)
+    with open(join_base(path), mode="w", encoding="UTF-8") as file:
         dump_json(loader.to_json(), file)
 
 
@@ -136,3 +146,9 @@ for event_id in EVENTS.including:
         for file in folder.loader.including:
             write_loader(file)
 print(f"Writing stuff: {time.time() - start_time:0.2f}")
+
+# export virtual data
+"""
+VIRTUAL_TRACK_STATS = TrackStats()
+write_loader3(VIRTUAL_TRACK_STATS)
+"""

@@ -14,14 +14,19 @@ class TagUsedBy(BaseUsedBy, UsedByToJsonMixin):
         self.data_track = OrderedDictWithCounter()
         self.data_background = OrderedDictWithCounter()
 
-    def register(self, file_loader: FileLoader):
+    def register(self, file_loader: FileLoader, count_increase=True):
         filetype = file_loader.filetype
         instance_id = file_loader.instance_id
+
         if filetype in self.SUPPORTED_FILETYPE:
             if filetype in FILETYPES_TRACK:
                 self.data_track[instance_id] = file_loader
+                if not count_increase:
+                    self.data_track.counter_adjust(instance_id, -1)
             elif filetype in FILETYPES_BACKGROUND:
                 self.data_background[instance_id] = file_loader
+                if not count_increase:
+                    self.data_background.counter_adjust(instance_id, -1)
         else:
             raise ValueError
 

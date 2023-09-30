@@ -10,13 +10,13 @@ class BaseUsedBy(abc.ABC, IToJson):
     SUPPORTED_FILETYPE = []
 
     @abc.abstractmethod
-    def register(self, file_loader: FileLoader):
+    def register(self, file_loader: FileLoader, count_increase=True):
         raise NotImplementedError
 
 
 class UsedByRegisterMixin:
-    def register(self, file_loader: FileLoader):
-        self.used_by.register(file_loader)
+    def register(self, file_loader: FileLoader, count_increase=True):
+        self.used_by.register(file_loader, count_increase)
 
 
 class UsedByToJsonMixin(IToJson):
