@@ -7,6 +7,7 @@ from data_model.types.lang_string import *
 from data_model.loader import i18n_translator, FileLoader
 from data_model.loader.manager_constant import constant_manager
 from data_model.actual_data.used_by import BaseUsedBy, UsedByRegisterMixin, OrderedDictWithCounter, UsedByToJsonMixin
+from data_model.actual_data.related_to import BaseRelatedTo, RelatedToJsonMixin, RelatedToRegisterMixin
 from data_model.actual_data._track.track_version import *
 from data_model.constant.file_type import FILETYPES_STORY, FILETYPES_BATTLE, FILETYPES_BACKGROUND, \
     FILE_VIDEO_INFO, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT, FILE_UI_EVENT, FILE_UI_CHILD, \
@@ -14,9 +15,43 @@ from data_model.constant.file_type import FILETYPES_STORY, FILETYPES_BATTLE, FIL
 from data_model.actual_data.tag import TagListManager
 from data_model.tool.tool import seconds_to_minutes
 from data_model.tool.interpage import InterpageMixin
-from ..tool.tool import counter_dict_sorter
+from ..tool.tool import counter_dict_sorter, PostExecutionManager
 
 __all__ = ["TrackInfo", "TrackListManager"]
+
+
+class TrackRelatedTo(BaseRelatedTo, RelatedToJsonMixin):
+    SUPPORTED_FILETYPE = [*FILETYPES_TRACK]
+    BLANK_DATA = {"track_other": []}
+    _components = ["track_other"]
+
+    def __init__(self, track_obj, related_to_data: dict):
+        self.track_other = {}
+        self.track_obj = track_obj
+        self.data = related_to_data
+        PostExecutionManager.add_to_pool(self.auto_register, pool_name="related_to")
+
+    def auto_register(self):
+        for i in self._components:
+            for j in self.data[i]:
+                file_loader = eval(f"TrackInfo.get_instance('{j}')")
+                file_loader.register_related_to(self.track_obj, i)
+
+    def register(self, file_loader: FileLoader, related_to_keyname: str, auto_register: bool = False):
+        """与 UsedBy 不同，这个函数会自动进行反向注册"""
+        filetype = file_loader.filetype
+        instance_id = file_loader.instance_id
+
+        if filetype in self.SUPPORTED_FILETYPE:
+            if filetype in FILETYPES_TRACK:
+                getattr(self, related_to_keyname)[instance_id] = file_loader
+            else:
+                raise RuntimeError
+        else:
+            raise ValueError
+
+        if not auto_register:
+            file_loader.register_related_to(self.track_obj, related_to_keyname, True)
 
 
 class TrackUsedBy(BaseUsedBy, UsedByToJsonMixin):
@@ -287,7 +322,7 @@ class Composer(BaseDataModel, UsedByRegisterMixin):
 
 # -------------------------------------------------------
 
-class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
+class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegisterMixin):
     """大类，用于代表一个完整的歌曲JSON文件"""
     no = Integer("no")
     track_type = Integer("track_type")
@@ -327,6 +362,11 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
         self.used_by = TrackUsedBy()
         self.reference = UrlModelListManager('reference')
         self.image = UrlModel()
+
+        if "related_to" in data.keys():
+            self.related_to = TrackRelatedTo(self, data["related_to"])
+        else:
+            self.related_to = TrackRelatedTo(self, TrackRelatedTo.BLANK_DATA)
 
         # Load Data
         self.name.load(data["name"])
@@ -369,8 +409,9 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
             "special_case": self.special_case.to_json_basic(),
             "reference": self.reference.to_json_basic(),
             "used_by": self.used_by.to_json_basic(),
+            "related_to": self.related_to.to_json_basic(),
             "image": self.image.to_json_basic(),
-            "interpage": self.get_interpage_data()
+            "interpage": self.get_interpage_data(),
         }
         return t
 

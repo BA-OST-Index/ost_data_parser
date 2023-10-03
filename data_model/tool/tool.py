@@ -82,6 +82,30 @@ class OrderedDictWithCounter:
         self.counter[instance_id] += increment
 
 
+class PostExecutionManager:
+    _post_pool = {"default": []}
+
+    @classmethod
+    def get_pool(cls, pool_name: str) -> list:
+        return cls._post_pool[pool_name]
+
+    @classmethod
+    def add_to_pool(cls, func, *args, pool_name: str = "default"):
+        if pool_name not in cls._post_pool.keys():
+            cls._post_pool[pool_name] = []
+        cls._post_pool[pool_name].append((func, args))
+
+    @classmethod
+    def execute_pool(cls, pool_name: str):
+        for i in cls._post_pool[pool_name]:
+            i[0](*i[1])
+
+    @classmethod
+    def execute_all(cls):
+        for i in cls._post_pool.keys():
+            cls.execute_pool(i)
+
+
 def seconds_to_minutes(seconds: int):
     return seconds // 60, seconds % 60
 

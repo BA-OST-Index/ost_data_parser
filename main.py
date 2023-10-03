@@ -6,6 +6,7 @@ from functools import partial
 
 from data_model.loader.loader_detect import get_loader_by_filepath
 from data_model.actual_data.virtual_loader import *
+from data_model.tool.tool import PostExecutionManager
 
 start_time = time.time()
 TAGS = get_loader_by_filepath([], r"data/tag", None)
@@ -18,6 +19,7 @@ UIS = get_loader_by_filepath([], r"data/ui", None)
 VIDEOS = get_loader_by_filepath([], r"data/video", None)
 EVENTS = get_loader_by_filepath([], r"data/event", None)
 FolderLoaderAccesser(TAGS, TRACKS, BACKGROUNDS, CHARACTERS, STORIES, BATTLES, UIS, VIDEOS, EVENTS)
+PostExecutionManager.execute_pool("related_to")
 print(f"Linking Stuff Together: {time.time() - start_time:0.2f}")
 
 BASE_EXPORT = "data_export"
@@ -150,5 +152,7 @@ print(f"Writing stuff: {time.time() - start_time:0.2f}")
 # export virtual data
 """
 VIRTUAL_TRACK_STATS = TrackStats()
+PostExecutionManager.execute_pool("virtual_data")
+
 write_loader3(VIRTUAL_TRACK_STATS)
 """

@@ -177,7 +177,7 @@ class CharacterLoader(FolderLoader):
                 new_namespace.append(os.path.split(basepath)[-1])
             else:
                 new_namespace.append(json_data["namespace"])
-            self.student = StudentInfo(data=json_data["name"], namespace=new_namespace, parent_data=None)
+            self.student = StudentInfo(data=json_data, namespace=new_namespace, parent_data=None)
         super().__init__(namespace, basepath, json_data, parent_data)
 
     def to_json(self):

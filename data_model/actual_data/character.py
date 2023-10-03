@@ -1,10 +1,51 @@
 from ..loader import FileLoader, schale_db_manager, i18n_translator
 from .used_by import BaseUsedBy, OrderedDictWithCounter, UsedByToJsonMixin, UsedByRegisterMixin
-from ..constant.file_type import FILETYPES_STORY, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT
+from .related_to import BaseRelatedTo, RelatedToJsonMixin, RelatedToRegisterMixin
+from ..constant.file_type import FILETYPES_STORY, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT,\
+    FILETYPES_CHARACTER
 from ..types.metatype.base_model import BaseDataModelListManager
 from ..types.url import UrlModel
 from ..tool.interpage import InterpageMixin
-from ..tool.tool import counter_dict_sorter
+from ..tool.tool import counter_dict_sorter, PostExecutionManager
+
+
+class CharacterRelatedTo(BaseRelatedTo, RelatedToJsonMixin):
+    SUPPORTED_FILETYPE = [*FILETYPES_CHARACTER]
+    BLANK_DATA = {"character_variant": [], "character_other": []}
+    _components = ["character_variant", "character_other"]
+
+    def __init__(self, character_obj, related_to_data: dict):
+        self.character_variant = {}
+        self.character_other = {}
+        self.character_obj = character_obj
+        self.data = related_to_data
+        PostExecutionManager.add_to_pool(self.auto_register, pool_name="related_to")
+
+    def auto_register(self):
+        for i in self._components:
+            for j in self.data[i]:
+                try:
+                    file_loader = eval(f"StudentInfo.get_instance('{j}')")
+                except ValueError:
+                    try:
+                        file_loader = eval(f"NpcInfo.get_instance('{j}')")
+                    except ValueError:
+                        raise
+
+                file_loader.register_related_to(self.character_obj, i)
+
+    def register(self, file_loader: FileLoader, related_to_keyname: str, auto_register: bool = False):
+        filetype = file_loader.filetype
+        instance_id = file_loader.instance_id
+
+        if filetype in self.SUPPORTED_FILETYPE:
+            getattr(self, related_to_keyname)[instance_id] = file_loader
+        else:
+            raise ValueError
+
+        if not auto_register:
+            file_loader.register_related_to(self.character_obj, related_to_keyname, True)
+
 
 
 class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
@@ -38,7 +79,7 @@ class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
         return d
 
 
-class CharacterInfo(FileLoader, InterpageMixin):
+class CharacterInfo(FileLoader, InterpageMixin, UsedByRegisterMixin, RelatedToRegisterMixin):
     _instance = {}
 
     @classmethod
@@ -75,7 +116,7 @@ class CharacterInfo(FileLoader, InterpageMixin):
         return target
 
 
-class NpcInfo(CharacterInfo, UsedByRegisterMixin):
+class NpcInfo(CharacterInfo):
     def __init__(self, **kwargs):
         super().__init__(data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])
 
@@ -83,6 +124,10 @@ class NpcInfo(CharacterInfo, UsedByRegisterMixin):
         self.desc = i18n_translator.query(self.data["desc"])
         self.image = UrlModel()
         self.image.load(self.data["image"])
+        if "related_to" in self.data.keys():
+            self.related_to = CharacterRelatedTo(self, self.data["related_to"])
+        else:
+            self.related_to = CharacterRelatedTo(self, CharacterRelatedTo.BLANK_DATA)
 
         self.used_by = CharacterUsedBy()
 
@@ -95,6 +140,7 @@ class NpcInfo(CharacterInfo, UsedByRegisterMixin):
             "desc": self.desc.to_json_basic(),
             "image": self.image.to_json_basic(),
             "used_by": self.used_by.to_json_basic(),
+            "related_to": self.related_to.to_json_basic(),
             "interpage": self.get_interpage_data()
         }
         return d
@@ -120,56 +166,62 @@ class NpcInfo(CharacterInfo, UsedByRegisterMixin):
         return super().get_instance(instance_id)
 
 
-class StudentInfo(CharacterInfo, UsedByRegisterMixin):
+class StudentInfo(CharacterInfo):
     def __init__(self, **kwargs):
         # Do not add super() here as the `data` is only a string instead of a dict
         self.data = kwargs["data"]
+        self.char_name = kwargs["data"]["name"]
         self.namespace = kwargs["namespace"]
+        self.filetype = 51
 
-        self.path_name = schale_db_manager.query_constant("students", self.data, "PathName")
-        self.dev_name = schale_db_manager.query_constant("students", self.data, "DevName")
-        self.family_name = schale_db_manager.query("students", self.data, "FamilyName")
-        self.personal_name = schale_db_manager.query("students", self.data, "PersonalName")
-        self.name = schale_db_manager.query("students", self.data, "Name")
-        self.school_year = schale_db_manager.query("students", self.data, "SchoolYear")
-        self.age = schale_db_manager.query("students", self.data, "CharacterAge")
-        self.birthday = schale_db_manager.query("students", self.data, "BirthDay")
-        self.birthday_localized = schale_db_manager.query("students", self.data, "Birthday")
-        self.profile = schale_db_manager.query("students", self.data, "ProfileIntroduction")
-        self.profile_gacha = schale_db_manager.query("students", self.data, "CharacterSSRNew")
-        self.hobby = schale_db_manager.query("students", self.data, "Hobby")
-        self.school_id = schale_db_manager.query_constant("students", self.data, "School")
+        self.path_name = schale_db_manager.query_constant("students", self.char_name, "PathName")
+        self.dev_name = schale_db_manager.query_constant("students", self.char_name, "DevName")
+        self.family_name = schale_db_manager.query("students", self.char_name, "FamilyName")
+        self.personal_name = schale_db_manager.query("students", self.char_name, "PersonalName")
+        self.name = schale_db_manager.query("students", self.char_name, "Name")
+        self.school_year = schale_db_manager.query("students", self.char_name, "SchoolYear")
+        self.age = schale_db_manager.query("students", self.char_name, "CharacterAge")
+        self.birthday = schale_db_manager.query("students", self.char_name, "BirthDay")
+        self.birthday_localized = schale_db_manager.query("students", self.char_name, "Birthday")
+        self.profile = schale_db_manager.query("students", self.char_name, "ProfileIntroduction")
+        self.profile_gacha = schale_db_manager.query("students", self.char_name, "CharacterSSRNew")
+        self.hobby = schale_db_manager.query("students", self.char_name, "Hobby")
+        self.school_id = schale_db_manager.query_constant("students", self.char_name, "School")
         self.school = schale_db_manager.query("localization",
-                                              "School_" + schale_db_manager.query_constant("students", self.data,
+                                              "School_" + schale_db_manager.query_constant("students", self.char_name,
                                                                                            "School"))
         self.school_long = schale_db_manager.query("localization",
                                                    "SchoolLong_" + schale_db_manager.query_constant("students",
-                                                                                                    self.data,
+                                                                                                    self.char_name,
                                                                                                     "School"))
         self.club = schale_db_manager.query("localization",
-                                            "Club_" + schale_db_manager.query_constant("students", self.data, "Club"))
+                                            "Club_" + schale_db_manager.query_constant("students", self.char_name, "Club"))
         self.squad_type = schale_db_manager.query("localization",
-                                                  "SquadType_" + schale_db_manager.query_constant("students", self.data,
+                                                  "SquadType_" + schale_db_manager.query_constant("students", self.char_name,
                                                                                                   "SquadType"))
         self.attack_type = schale_db_manager.query("localization",
                                                    "BulletType_" + schale_db_manager.query_constant("students",
-                                                                                                    self.data,
+                                                                                                    self.char_name,
                                                                                                     "BulletType"))
         self.armor_type = schale_db_manager.query("localization",
-                                                  "ArmorType_" + schale_db_manager.query_constant("students", self.data,
+                                                  "ArmorType_" + schale_db_manager.query_constant("students", self.char_name,
                                                                                                   "ArmorType"))
-        self.collection_bg = schale_db_manager.query_constant("students", self.data, "CollectionBG")
+        self.collection_bg = schale_db_manager.query_constant("students", self.char_name, "CollectionBG")
 
-        self._id = schale_db_manager.query_constant("students", self.data, "Id")
-        self._squad_type = schale_db_manager.query_constant("students", self.data, "SquadType")
-        self._attack_type = schale_db_manager.query_constant("students", self.data, "BulletType")
-        self._armor_type = schale_db_manager.query_constant("students", self.data, "ArmorType")
+        self._id = schale_db_manager.query_constant("students", self.char_name, "Id")
+        self._squad_type = schale_db_manager.query_constant("students", self.char_name, "SquadType")
+        self._attack_type = schale_db_manager.query_constant("students", self.char_name, "BulletType")
+        self._armor_type = schale_db_manager.query_constant("students", self.char_name, "ArmorType")
 
         self.used_by = CharacterUsedBy()
+        if "related_to" not in kwargs["data"].keys():
+            self.related_to = CharacterRelatedTo(self, CharacterRelatedTo.BLANK_DATA)
+        else:
+            self.related_to = CharacterRelatedTo(self, kwargs["data"]["related_to"])
 
     @staticmethod
-    def _get_instance_id(data: str):
-        return "STU_" + data.upper()
+    def _get_instance_id(data: dict):
+        return "STU_" + data["name"].upper()
 
     def to_json(self):
         return {
@@ -217,7 +269,8 @@ class StudentInfo(CharacterInfo, UsedByRegisterMixin):
                     "type": self._armor_type,
                     "lang": self.armor_type.to_json()
                 }
-            }
+            },
+            "related_to": self.related_to.to_json_basic()
         }
 
     def to_json_basic(self):

@@ -4,7 +4,7 @@ import json
 import hashlib
 from collections import namedtuple
 from ..config import DATA_BASE_PATH
-from ..tool.tool import NamespacePathMixin, SingletonInstanceMixin
+from ..tool.tool import NamespacePathMixin, SingletonInstanceMixin, PostExecutionManager
 from ..tool.to_json import IToJson
 from ..types.metatype.base_type import Integer
 from ..types.metatype.complex import UUID
@@ -152,7 +152,7 @@ class VirtualLoader(BaseLoader, NamespacePathMixin):
         self.template_path = template_path
         self.page_path = page_path
 
-        self.load_data()
+        PostExecutionManager.add_to_pool(self.load_data, pool_name="virtual_data")
 
     @abc.abstractmethod
     def load_data(self):
