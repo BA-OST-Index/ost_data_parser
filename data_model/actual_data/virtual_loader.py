@@ -3,12 +3,12 @@ from ..tool.tool import PostExecutionManager
 
 
 class FolderLoaderAccesser:
-    __slots__ = ["TAG", "TRACK", "BACKGROUND", "CHARACTER", "STORY", "BATTLE", "UI", "VIDEO", "EVENT"]
+    __slots__ = ["TAG", "TRACK", "BACKGROUND", "CHARACTER", "STORY", "BATTLE", "UI", "VIDEO", "EVENT", "ALBUM"]
     _instance = None
 
-    def __init__(self, tag, track, background, character, story, battle, ui, video, event):
+    def __init__(self, tag, track, background, character, story, battle, ui, video, event, album):
         self.TAG, self.TRACK, self.BACKGROUND, self.CHARACTER, self.STORY, self.BATTLE, self.UI, self.VIDEO, \
-        self.EVENT = tag, track, background, character, story, battle, ui, video, event
+        self.EVENT, self.ALBUM = tag, track, background, character, story, battle, ui, video, event, album
 
         FolderLoaderAccesser._instance = self
 

@@ -27,6 +27,19 @@ class RelatedToJsonMixin(IToJson):
                 for j in sorted(data, key=lambda k: int(data[k].no)):
                     data_.append(data[j].to_json_basic())
                 data = data_
+            # 对人物排序作特别优化
+            elif len(data) > 0 and "character" in i:
+                def sort_character(key):
+                    item = data[key]
+                    if item.filetype == 51:
+                        return "0" + item.uuid
+                    else:
+                        return "1" + item.uuid
+
+                data_ = []
+                for j in sorted(data, key=sort_character):
+                    data_.append(data[j].to_json_basic())
+                data = data_
             else:
                 data_ = [i.to_json_basic() for i in data.values()]
 

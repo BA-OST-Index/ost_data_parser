@@ -8,6 +8,7 @@ from data_model.loader import FileLoader
 from data_model.constant.file_type import FILE_STORY_MAIN, FILE_STORY_SIDE, FILE_STORY_SHORT, FILE_STORY_EVENT,\
     FILE_STORY_OTHER
 from ._story.story_part import StoryInfoPartListManager
+from ._story.story_source_all import StoryInfoVideo
 from ..tool.parent_data import IParentData
 from ..tool.interpage import InterpageMixin
 from collections import OrderedDict
@@ -29,8 +30,10 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
 
         self.name = i18n_translator[data["name"]]
         self.pos = storyPosAuto(data["pos"])
-        self.part = StoryInfoPartListManager(data["part"])
+        self.part = StoryInfoPartListManager(data["part"], self)
         self.image = UrlModel()
+        # TODO: StoryInfoSource
+        # self.video = StoryInfoVideo(data.get("video", {}))
         self.image.load(self.data["image"])
 
         # Special case: some stories still have content after the battle,
@@ -49,49 +52,56 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
         # Register itself to every track in StoryInfoPartListManager
         # For every story (not story parts) it should only be registered for once
         registered = []
+        # last_track 用于模拟一种更加接近于现实的使用情况
+        # 其方式为：记录当前part的最后一首曲子，与后面那个part的第一首曲子对比
+        # 如果是新曲子，就+1
+        last_track = None
 
         for part in self.part.part:
-            for track in part.track.track:
-                if track not in registered:
-                    track.register(self)
-                    registered.append(track)
-            for char in part.character.character:
-                if char not in registered:
-                    char.register(self)
-                    registered.append(char)
-            for background in part.background.background:
-                if background not in registered:
-                    background.register(self)
-                    registered.append(background)
+            for segment in part.segments:
+                if last_track is None:
+                    if len(segment.track.track) != 0:
+                        last_track = segment.track.track[0]
+                        last_track.register(self)
+                for track in segment.track.track:
+                    if track is not last_track:
+                        track.register(self)
+                        last_track = track
+
+                for char in segment.character.character:
+                    if char not in registered:
+                        char.register(self)
+                        registered.append(char)
+                for background in segment.background.background:
+                    if background not in registered:
+                        background.register(self)
+                        registered.append(background)
 
         # 各个StoryPart里头的register
         # 基本上相当于把 StoryPartInfo.extra_register 给取代了
         registered = {}
 
         for part in self.part.part:
-            # For CharacterInfo
-            # register every TrackInfo to CharacterInfo
-            for char in part.character.character:
-                for track in part.track.track:
-                    if char not in registered.keys(): registered[char] = []
-                    if track not in registered.keys(): registered[track] = []
+            for segment in part.segments:
+                # For CharacterInfo
+                # register every TrackInfo to CharacterInfo
+                for char in segment.character.character:
+                    for track in segment.track.track:
+                        if char not in registered.keys(): registered[char] = []
+                        if track not in registered.keys(): registered[track] = []
 
-                    if track not in registered[char]:
-                        char.register(track)
-                        registered[char].append(track)
-                    if char not in registered[track]:
-                        track.register(char)
-                        registered[track].append(char)
+                        if track not in registered[char]:
+                            char.register(track)
+                            registered[char].append(track)
+                        if char not in registered[track]:
+                            track.register(char)
+                            registered[track].append(char)
 
                 # For BackgroundInfo
-                # if there's only one background, then:
-                #   - register this BackgroundInfo to every TrackInfo
-                #   - register every TrackInfo to this BackgroundInfo
-                if len(part.background.background) == 1:
-                    background = part.background.background[0]
+                for background in segment.background.background:
                     if background not in registered.keys(): registered[background] = []
 
-                    for track in part.track.track:
+                    for track in segment.track.track:
                         if track not in registered.keys(): registered[track] = []
 
                         if track not in registered[background]:
@@ -100,20 +110,6 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
                         if background not in registered[track]:
                             track.register(background)
                             registered[track].append(background)
-
-                # For TrackInfo
-                # if there's only one track, then:
-                #   - register this TrackInfo to every BackgroundInfo
-                if len(part.track.track) == 1:
-                    track = part.track.track[0]
-                    if track not in registered.keys(): registered[track] = []
-
-                    for background in part.background.background:
-                        if background not in registered.keys(): registered[background] = []
-
-                        if track not in registered[background]:
-                            background.register(track)
-                            registered[background].append(track)
 
 
     @staticmethod
@@ -185,9 +181,6 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
             # volume 不一样
             if pos_value[0] != instance.pos.get_all_pos()[0]:
                 return None
-            # chapter 不一样
-            if pos_value[1] != instance.pos.get_all_pos()[1]:
-                return None
 
         return instance
 
@@ -218,8 +211,7 @@ class StoryInfoBond(StoryInfo):
     def after_instantiate(self):
         # To avoid that when creating a student's bond story,
         # it can't find itself since it's in the process of being created.
-        self.part = StoryInfoPartListManager(self.data["part"])
-
+        self.part = StoryInfoPartListManager(self.data["part"], self)
         self.extra_register()
 
     @staticmethod

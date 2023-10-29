@@ -1,8 +1,8 @@
 from ..loader import FileLoader, schale_db_manager, i18n_translator
 from .used_by import BaseUsedBy, OrderedDictWithCounter, UsedByToJsonMixin, UsedByRegisterMixin
 from .related_to import BaseRelatedTo, RelatedToJsonMixin, RelatedToRegisterMixin
-from ..constant.file_type import FILETYPES_STORY, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT,\
-    FILETYPES_CHARACTER
+from ..constant.file_type import FILETYPES_STORY, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT, \
+    FILETYPES_CHARACTER, FILE_BACKGROUND_INFO
 from ..types.metatype.base_model import BaseDataModelListManager
 from ..types.url import UrlModel
 from ..tool.interpage import InterpageMixin
@@ -47,14 +47,14 @@ class CharacterRelatedTo(BaseRelatedTo, RelatedToJsonMixin):
             file_loader.register_related_to(self.character_obj, related_to_keyname, True)
 
 
-
 class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
-    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_TRACK, FILE_STORY_EVENT]
-    _components = ["data_story", "data_track"]
+    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BACKGROUND_INFO]
+    _components = ["data_story", "data_track", "data_background"]
 
     def __init__(self):
         self.data_story = OrderedDictWithCounter()
         self.data_track = OrderedDictWithCounter()
+        self.data_background = OrderedDictWithCounter()
 
     def register(self, file_loader: FileLoader, count_increase=True):
         filetype = file_loader.filetype
@@ -69,6 +69,10 @@ class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
                 self.data_track[instance_id] = file_loader
                 if not count_increase:
                     self.data_track.counter_adjust(instance_id, -1)
+            elif filetype == FILE_BACKGROUND_INFO:
+                self.data_background[instance_id] = file_loader
+                if not count_increase:
+                    self.data_background.counter_adjust(instance_id, -1)
         else:
             raise ValueError
 
@@ -195,16 +199,19 @@ class StudentInfo(CharacterInfo):
                                                                                                     self.char_name,
                                                                                                     "School"))
         self.club = schale_db_manager.query("localization",
-                                            "Club_" + schale_db_manager.query_constant("students", self.char_name, "Club"))
+                                            "Club_" + schale_db_manager.query_constant("students", self.char_name,
+                                                                                       "Club"))
         self.squad_type = schale_db_manager.query("localization",
-                                                  "SquadType_" + schale_db_manager.query_constant("students", self.char_name,
+                                                  "SquadType_" + schale_db_manager.query_constant("students",
+                                                                                                  self.char_name,
                                                                                                   "SquadType"))
         self.attack_type = schale_db_manager.query("localization",
                                                    "BulletType_" + schale_db_manager.query_constant("students",
                                                                                                     self.char_name,
                                                                                                     "BulletType"))
         self.armor_type = schale_db_manager.query("localization",
-                                                  "ArmorType_" + schale_db_manager.query_constant("students", self.char_name,
+                                                  "ArmorType_" + schale_db_manager.query_constant("students",
+                                                                                                  self.char_name,
                                                                                                   "ArmorType"))
         self.collection_bg = schale_db_manager.query_constant("students", self.char_name, "CollectionBG")
 
@@ -223,9 +230,14 @@ class StudentInfo(CharacterInfo):
     def _get_instance_id(data: dict):
         return "STU_" + data["name"].upper()
 
+    @property
+    def uuid(self):
+        """向前兼容"""
+        return self.path_name
+
     def to_json(self):
         return {
-            "uuid": self.path_name,
+            "uuid": self.uuid,
             "id": self._id,
             "name": {
                 "path_name": self.path_name,
@@ -275,7 +287,7 @@ class StudentInfo(CharacterInfo):
 
     def to_json_basic(self):
         return {
-            "uuid": self.path_name,
+            "uuid": self.uuid,
             "id": self._id,
             "name": {
                 "path_name": self.path_name,
@@ -352,7 +364,8 @@ class CharacterListManager(BaseDataModelListManager):
             pass
 
         for i in data:
-            if i.startswith("L"): continue
+            if i.startswith("L"):
+                continue
             self.character.append(StudentInfo.get_instance(i))
 
     def to_json(self):

@@ -1,6 +1,6 @@
 from ..loader import FileLoader, i18n_translator
 from .used_by import BaseUsedBy, OrderedDictWithCounter, UsedByToJsonMixin, UsedByRegisterMixin
-from ..constant.file_type import FILETYPES_STORY, FILETYPES_TRACK, FILE_STORY_EVENT
+from ..constant.file_type import FILETYPES_STORY, FILETYPES_TRACK, FILE_STORY_EVENT, FILETYPES_CHARACTER
 from ..types.metatype.base_model import BaseDataModelListManager
 from ..types.url import UrlModel
 from ..actual_data.tag import TagListManager
@@ -12,12 +12,13 @@ class BackgroundUsedBy(BaseUsedBy, UsedByToJsonMixin):
     # Copied from `character.py`
     # I did not merge simply because they're not even the same one, after all.
     # And by that said they are possible to be changed in the future independently.
-    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_TRACK, FILE_STORY_EVENT]
-    _components = ["data_story", "data_track"]
+    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_TRACK, FILE_STORY_EVENT, *FILETYPES_CHARACTER]
+    _components = ["data_story", "data_track", "data_character"]
 
     def __init__(self):
         self.data_story = OrderedDictWithCounter()
         self.data_track = OrderedDictWithCounter()
+        self.data_character = OrderedDictWithCounter()
 
     def register(self, file_loader: FileLoader, count_increase=True):
         filetype = file_loader.filetype
@@ -32,6 +33,10 @@ class BackgroundUsedBy(BaseUsedBy, UsedByToJsonMixin):
                 self.data_track[instance_id] = file_loader
                 if not count_increase:
                     self.data_track.counter_adjust(instance_id, -1)
+            elif filetype in FILETYPES_CHARACTER:
+                self.data_character[instance_id] = file_loader
+                if not count_increase:
+                    self.data_character.counter_adjust(instance_id, -1)
         else:
             raise ValueError
 

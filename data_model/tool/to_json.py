@@ -4,11 +4,11 @@ import abc
 class IToJson:
     @abc.abstractmethod
     def to_json(self):
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def to_json_basic(self):
-        pass
+        raise NotImplementedError
 
 
 class ToJsonMixin(IToJson):

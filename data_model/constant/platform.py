@@ -1,0 +1,4 @@
+UNSPECIFIED = "-1"
+TWITTER = "1"
+BILIBILI = "2"
+YOUTUBE = "3"

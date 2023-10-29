@@ -362,6 +362,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
         self.used_by = TrackUsedBy()
         self.reference = UrlModelListManager('reference')
         self.image = UrlModel()
+        self.album = []
 
         if "related_to" in data.keys():
             self.related_to = TrackRelatedTo(self, data["related_to"])
@@ -407,6 +408,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
             "tags": self.tags.to_json_basic(),
             "version": self.version.to_json_basic(),
             "special_case": self.special_case.to_json_basic(),
+            "album": [i.to_json_basic() for i in self.album],
             "reference": self.reference.to_json_basic(),
             "used_by": self.used_by.to_json_basic(),
             "related_to": self.related_to.to_json_basic(),
@@ -428,6 +430,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
             "desc": self.desc.to_json_basic(),
             "composer": self.composer.to_json_basic(),
             "image": self.image.to_json_basic(),
+            "album": [i.to_json_basic() for i in self.album],
             "interpage": self.get_interpage_data()
         }
         return t

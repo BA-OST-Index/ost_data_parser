@@ -1,7 +1,7 @@
 import abc
 import json
 import os.path
-from ..constant.file_type import FILETYPES_TRACK, FILETYPES_TRACK_DIR, \
+from ..constant.file_type import FILETYPES_TRACK, FILETYPES_TRACK_DIR, FILE_ALBUM, FILE_DIR_ALBUM_ALL, \
     FILE_TAG_INFO, FILE_DIR_TAG_ALL, \
     FILE_DIR_CHARACTER_ALL, FILE_DIR_CHARACTER_CATEGORY, FILE_DIR_STUDENT_SINGLE, FILE_DIR_STUDENT_BOND, \
     FILE_STORY_BOND, FILETYPES_STORY, FILETYPES_STORY_DIR, FILE_CHARACTER_INFO, \
@@ -9,20 +9,23 @@ from ..constant.file_type import FILETYPES_TRACK, FILETYPES_TRACK_DIR, \
     FILE_UI_CHILD, FILE_UI_EVENT, FILETYPES_UI_DIR, \
     FILETYPES_BATTLE, FILETYPES_BATTLE_DIR, \
     FILE_BATTLE_MAIN, FILE_BATTLE_EVENT, FILE_BATTLE_ARENA, FILE_BATTLE_TOTAL_ASSAULT, FILE_BATTLE_BOUNTY_HUNT, \
-    FILE_BATTLE_SCHOOL_EXCHANGE, FILE_BATTLE_SPECIAL_COMMISSION, \
+    FILE_BATTLE_SCHOOL_EXCHANGE, FILE_BATTLE_SPECIAL_COMMISSION, FILE_BATTLE_WORLD_RAID, \
     FILE_VIDEO_INFO, FILE_DIR_VIDEO_ALL, \
-    FILETYPES_EVENT_DIR, FILE_STORY_EVENT
+    FILETYPES_EVENT_DIR, FILE_STORY_EVENT, \
+    FILE_REFERENCE_DATA
 from ..actual_data.track import TrackInfo
+from ..actual_data.track_album import AlbumInfo
 from .folder_loader import TrackFolder, TagFolder, CharacterLoader, BackgroundLoader, StoryLoader, UiLoader, \
-    BattleLoader, VideoLoader, EventLoader
+    BattleLoader, VideoLoader, EventLoader, AlbumLoader
 from ..actual_data.tag import TagInfo
 from ..actual_data.story import StoryInfoBond, StoryInfo
 from ..actual_data.background import BackgroundInfo
 from ..actual_data.character import NpcInfo
 from ..actual_data.ui import UiInfo, UiInfoEvent
 from ..actual_data.battle import MainBattleInfo, SchoolExchangeInfo, TotalAssaultInfo, \
-    SpecialCommissionInfo, BountyHuntInfo, EventBattleInfo
+    SpecialCommissionInfo, BountyHuntInfo, EventBattleInfo, WorldRaidBattleInfo
 from ..actual_data.video import VideoInfo
+from ..actual_data.reference_data import ReferenceFile
 
 
 # This implementation of State design pattern is achieved through `yield` and `yield from` expressions.
@@ -38,8 +41,17 @@ class BaseLoaderDetect(abc.ABC):
         raise NotImplementedError
 
 
-class EventLoaderDetect(BaseLoaderDetect):
+class OtherLoaderDetect(BaseLoaderDetect):
     next_detect = None
+
+    @staticmethod
+    def detect(entry):
+        if entry.filetype == FILE_REFERENCE_DATA:
+            yield ReferenceFile(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+
+
+class EventLoaderDetect(BaseLoaderDetect):
+    next_detect = OtherLoaderDetect
 
     @staticmethod
     def detect(entry):
@@ -50,6 +62,8 @@ class EventLoaderDetect(BaseLoaderDetect):
             yield EventBattleInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
         elif entry.filetype == FILE_STORY_EVENT:
             yield StoryInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+        else:
+            yield from EventLoaderDetect.next_detect.detect(entry)
 
 
 class VideoLoaderDetect(BaseLoaderDetect):
@@ -85,6 +99,8 @@ class BattleLoaderDetect(BaseLoaderDetect):
                 yield SchoolExchangeInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
             elif entry.filetype == FILE_BATTLE_SPECIAL_COMMISSION:
                 yield SpecialCommissionInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+            elif entry.filetype == FILE_BATTLE_WORLD_RAID:
+                yield WorldRaidBattleInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
             else:
                 raise NotImplementedError
         else:
@@ -184,6 +200,11 @@ class TrackLoaderDetect(BaseLoaderDetect):
             yield TrackInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
         elif entry.filetype in FILETYPES_TRACK_DIR:
             yield TrackFolder(namespace=entry.namespace, json_data=entry.data,
+                              basepath=entry.filepath, parent_data=entry.parent_data)
+        elif entry.filetype == FILE_ALBUM:
+            yield AlbumInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+        elif entry.filetype == FILE_DIR_ALBUM_ALL:
+            yield AlbumLoader(namespace=entry.namespace, json_data=entry.data,
                               basepath=entry.filepath, parent_data=entry.parent_data)
         else:
             yield from TrackLoaderDetect.next_detect.detect(entry)

@@ -130,6 +130,21 @@ class BattleLoader(GenericFolder):
                     }]
             )
 
+    def auto_include(self):
+        including = super().auto_include()
+
+        def sorter(obj: str):
+            if obj.endswith(".json"):
+                if obj.startswith("H"):
+                    return "1" + obj
+                return "0" + obj
+            else:
+                return obj.rjust(2, "0")
+
+        including.sort(key=sorter)
+
+        return including
+
     def to_json_basic(self):
         d = super().to_json_basic()
         d["image"] = self.image.to_json_basic()
@@ -217,3 +232,7 @@ class CharacterLoader(FolderLoader):
         except Exception:
             pass
         return d
+
+
+class AlbumLoader(GenericFolder):
+    pass

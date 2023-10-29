@@ -7,8 +7,6 @@ from ..tool.interpage import InterpageMixin
 
 
 class BaseBattleInfo(FileLoader, IParentData):
-    _instance = {}
-
     def parent_data_to_json(self):
         if self.parent_data is None:
             return self.parent_data
@@ -26,6 +24,7 @@ class MainBattleInfo(BaseBattleInfo, InterpageMixin):
     is_hard = Bool('is_hard')
     is_normal = Bool('is_normal')
     is_sub = Bool('is_sub')
+    _instance = {}
 
     def __init__(self, **kwargs):
         super().__init__(data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])
@@ -85,38 +84,21 @@ class MainBattleInfo(BaseBattleInfo, InterpageMixin):
         return super().get_instance(instance_id)
 
     def _get_instance_offset(self, offset: int):
-        INSTANCE_ID_FORMAT = f"MAIN_{self.chapter}_"
+        battle_list = list(self._instance.keys())
+        current_index = battle_list.index(self.instance_id)
 
-        temp = list(self.no)
-        mission_type, stage_no, sub_no = temp[0], temp[1], temp[2]
+        if current_index == 0 and offset < 0:
+            return None
 
-        # sub_no
         try:
-            ins_id = INSTANCE_ID_FORMAT + "".join([mission_type, stage_no,
-                                                   str(int(sub_no) + offset)])
-            return self._instance[ins_id]
-        except KeyError:
-            pass
-
-        # stage_no
-        try:
-            ins_id = INSTANCE_ID_FORMAT + "".join([mission_type,
-                                                   str(int(stage_no) + offset),
-                                                   "0"])
-            return self._instance[ins_id]
-        except KeyError:
-            pass
-
-        # mission_type
-        if mission_type == "N":
-            try:
-                ins_id = INSTANCE_ID_FORMAT + "".join(["H", "1", "0"])
-                return self._instance[ins_id]
-            except KeyError:
-                return None
+            return self._instance[battle_list[current_index + offset]]
+        except IndexError:
+            return None
 
 
 class SchoolExchangeInfo(BaseBattleInfo):
+    _instance = {}
+
     def __init__(self, **kwargs):
         super().__init__(data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])
         data = kwargs["data"]
@@ -155,6 +137,8 @@ class SchoolExchangeInfo(BaseBattleInfo):
 
 
 class TotalAssaultInfo(BaseBattleInfo):
+    _instance = {}
+
     def __init__(self, **kwargs):
         super().__init__(data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])
         data = kwargs["data"]
@@ -215,6 +199,8 @@ class TotalAssaultInfo(BaseBattleInfo):
 
 
 class SpecialCommissionInfo(BaseBattleInfo):
+    _instance = {}
+
     def __init__(self, **kwargs):
         super().__init__(data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])
         data = kwargs["data"]
@@ -263,6 +249,8 @@ class SpecialCommissionInfo(BaseBattleInfo):
 
 
 class BountyHuntInfo(BaseBattleInfo):
+    _instance = {}
+
     def __init__(self, **kwargs):
         super().__init__(data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])
         data = kwargs["data"]
@@ -312,6 +300,7 @@ class BountyHuntInfo(BaseBattleInfo):
 
 
 class EventBattleInfo(MainBattleInfo):
+    _instance = {}
     event_id = Integer('event_id')
 
     def __init__(self, **kwargs):
@@ -365,35 +354,59 @@ class EventBattleInfo(MainBattleInfo):
         }
 
     def _get_instance_offset(self, offset: int):
-        INSTANCE_ID_FORMAT = f"EVENT_{self.event_id}_"
+        battle_list = list(self._instance.keys())
+        current_index = battle_list.index(self.instance_id)
 
-        temp = list(self.no)
-        temp = [temp[0], "".join(temp[1:])]
+        if current_index == 0 and offset < 0:
+            return None
 
-        # stage no
         try:
-            ins_id = int(temp[1]) + offset
-            return self._instance[INSTANCE_ID_FORMAT + "".join([str(temp[0]) + str(ins_id)])]
-        except KeyError:
-            if offset < 0:
-                if temp[0] == "N":
-                    return None
-
-                for i in range(15, 0, -1):
-                    try:
-                        return self._instance[INSTANCE_ID_FORMAT + "N" + str(i)]
-                    except KeyError:
-                        pass
+            result = self._instance[battle_list[current_index + offset]]
+        except IndexError:
+            return None
+        else:
+            if result.event_id != self.event_id:
                 return None
+            return result
 
-            if offset > 0:
-                if temp[0] == "H":
-                    return None
 
-                # then probably it's the end of normal missions
-                # let's switch to hard ones!
-                try:
-                    return self._instance[INSTANCE_ID_FORMAT + "H1"]
-                except KeyError:
-                    # still no? well i guess the data is just broken
-                    return None
+class WorldRaidBattleInfo(BaseBattleInfo):
+    _instance = {}
+
+    def __init__(self, **kwargs):
+        super().__init__(data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])
+        data = kwargs["data"]
+
+        self.image = UrlModel()
+        self.image.load(data["image"])
+        self.track = TrackInfo.get_instance(instance_id=data["track"])
+
+        self.name_ori = schale_db_manager.query_constant("world_raids", data["name"], "PathName")
+        self.name = schale_db_manager.query("world_raids", data["name"], "Name")
+
+        self.extra_register()
+
+    def extra_register(self):
+        self.track.register(self)
+
+    @staticmethod
+    def _get_instance_id(data: dict):
+        return "WORLDRAID_" + data["name"].upper()
+
+    def to_json(self):
+        d = {
+            "uuid": self.uuid,
+            "filetype": self.filetype,
+            "id": self.data["name"].lower(),
+            "namespace": self.namespace,
+
+            "name": self.name.to_json_basic(),
+            "name_ori": self.name_ori,
+
+            "track": self.track.to_json_basic(),
+            "parent_data": self.parent_data_to_json()
+        }
+        return d
+
+    def to_json_basic(self):
+        return self.to_json()

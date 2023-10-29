@@ -68,4 +68,4 @@ class BaseDataModelListManager(BaseDataModel, IToJson):
         super().load(data)
 
     def to_json_basic(self):
-        return self.to_json()[-1]
+        return self.to_json()

@@ -75,13 +75,11 @@ class FolderLoader(NamespacePathMixin, IToJson, ParentDataMixin):
         else:
             including = self.data["include"]
 
-        # linux, why would you list the dirs from Z to A?
         including.sort()
 
         return including
 
     def process(self):
-        # TODO: Avoid circular imports
         from .loader_detect import get_loader_by_filepath
         for (n, i) in enumerate(self.including):
             if os.path.isfile(self.join_path(i)):

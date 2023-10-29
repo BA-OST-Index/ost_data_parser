@@ -18,8 +18,10 @@ BATTLES = get_loader_by_filepath(["main"], r"data/main/battle", None)
 UIS = get_loader_by_filepath([], r"data/ui", None)
 VIDEOS = get_loader_by_filepath([], r"data/video", None)
 EVENTS = get_loader_by_filepath([], r"data/event", None)
-FolderLoaderAccesser(TAGS, TRACKS, BACKGROUNDS, CHARACTERS, STORIES, BATTLES, UIS, VIDEOS, EVENTS)
+ALBUMS = get_loader_by_filepath([], r"data/album", None)
+FolderLoaderAccesser(TAGS, TRACKS, BACKGROUNDS, CHARACTERS, STORIES, BATTLES, UIS, VIDEOS, EVENTS, ALBUMS)
 PostExecutionManager.execute_pool("related_to")
+PostExecutionManager.execute_pool("reference_data")
 print(f"Linking Stuff Together: {time.time() - start_time:0.2f}")
 
 BASE_EXPORT = "data_export"
@@ -147,6 +149,11 @@ for event_id in EVENTS.including:
         write_loader2(folder.loader)
         for file in folder.loader.including:
             write_loader(file)
+
+# export albums
+write_loader2(ALBUMS)
+for album in ALBUMS.including:
+    write_loader(album)
 print(f"Writing stuff: {time.time() - start_time:0.2f}")
 
 # export virtual data

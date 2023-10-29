@@ -84,7 +84,8 @@ class ZhLangStringModel(LangStringModel):
             raise ValueError("Invalid lang_code %r" % lang_code)
 
         # When couldn't be found, search in the following order.
-        return get_other()
+        # 最终fallback到英语准没错
+        return get_other() or self.en
 
 
 class LangStringModelList(BaseDataModelList):

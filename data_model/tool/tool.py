@@ -1,4 +1,5 @@
 import abc
+import logging
 from collections import OrderedDict
 
 
@@ -97,14 +98,52 @@ class PostExecutionManager:
 
     @classmethod
     def execute_pool(cls, pool_name: str):
-        for i in cls._post_pool[pool_name]:
-            i[0](*i[1])
+        try:
+            for i in cls._post_pool[pool_name]:
+                i[0](*i[1])
+        except KeyError:
+            logging.warning(f"No such pool: {pool_name}")
 
     @classmethod
     def execute_all(cls):
         for i in cls._post_pool.keys():
             cls.execute_pool(i)
 
+
+class ObjectAccessProxier:
+    """提供一种代理方式来访问对象"""
+
+    def __init__(self, obj):
+        self._object = obj
+        self.set_default_policy()
+
+    def set_default_policy(self):
+        self.allow_del = False
+        self.allow_set = False
+        self.allow_get = True
+
+        # 自定义返回内容
+        self.custom_get = {}
+
+    def __getattribute__(self, item):
+        if not self.allow_get:
+            raise PermissionError
+
+        if item in self.custom_get.keys():
+            return self.custom_get[item]
+        return getattr(self._object, item)
+
+    def __setattr__(self, key, value):
+        if not self.allow_set:
+            raise PermissionError
+
+        setattr(self._object, key, value)
+
+    def __delattr__(self, item):
+        if not self.allow_del:
+            raise PermissionError
+
+        delattr(self._object, item)
 
 def seconds_to_minutes(seconds: int):
     return seconds // 60, seconds % 60
@@ -138,7 +177,8 @@ def counter_dict_sorter(d: OrderedDict, key_name: list, reverse: bool = False, i
                     values.append(actual_dict[i])
                 elif isinstance(i, list):
                     _curr = actual_dict
-                    for j in i: _curr = _curr[j]
+                    for j in i:
+                        _curr = _curr[j]
                     values.append(_curr)
             except KeyError:
                 if not ignore_key_errors:
@@ -158,3 +198,12 @@ def counter_dict_sorter(d: OrderedDict, key_name: list, reverse: bool = False, i
             new_d[item[0]] = item[1]
 
     return new_d
+
+
+def uuid_crafter(string: str):
+    if len(string) != 32:
+        raise ValueError("Should provide a 32-character-long string!")
+
+    a, b, c, d, e = slice(0, 8), slice(8, 12), slice(12, 16), slice(16, 20), slice(20, 32)
+    all_slices = [a, b, c, d, e]
+    return "-".join([string[i] for i in all_slices])
