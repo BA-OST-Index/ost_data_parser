@@ -2,7 +2,7 @@ from ..loader import FileLoader, schale_db_manager, i18n_translator
 from .used_by import BaseUsedBy, OrderedDictWithCounter, UsedByToJsonMixin, UsedByRegisterMixin
 from .related_to import BaseRelatedTo, RelatedToJsonMixin, RelatedToRegisterMixin
 from ..constant.file_type import FILETYPES_STORY, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT, \
-    FILETYPES_CHARACTER, FILE_BACKGROUND_INFO
+    FILETYPES_CHARACTER, FILETYPES_BACKGROUND, FILE_BACKGROUND_INFO
 from ..types.metatype.base_model import BaseDataModelListManager
 from ..types.url import UrlModel
 from ..tool.interpage import InterpageMixin
@@ -48,13 +48,16 @@ class CharacterRelatedTo(BaseRelatedTo, RelatedToJsonMixin):
 
 
 class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
-    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BACKGROUND_INFO]
-    _components = ["data_story", "data_track", "data_background"]
+    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_TRACK, *FILETYPES_BACKGROUND, *FILETYPES_CHARACTER,
+                          FILE_STORY_EVENT]
+    _components = ["data_story", "data_track", "data_background", "data_background_direct", "data_character"]
 
     def __init__(self):
         self.data_story = OrderedDictWithCounter()
         self.data_track = OrderedDictWithCounter()
         self.data_background = OrderedDictWithCounter()
+        self.data_background_direct = OrderedDictWithCounter()
+        self.data_character = OrderedDictWithCounter()
 
     def register(self, file_loader: FileLoader, count_increase=True):
         filetype = file_loader.filetype
@@ -69,10 +72,17 @@ class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
                 self.data_track[instance_id] = file_loader
                 if not count_increase:
                     self.data_track.counter_adjust(instance_id, -1)
-            elif filetype == FILE_BACKGROUND_INFO:
-                self.data_background[instance_id] = file_loader
+            elif filetype in FILETYPES_BACKGROUND:
+                if filetype == FILE_BACKGROUND_INFO:
+                    self.data_background[instance_id] = file_loader
+                    if not count_increase:
+                        self.data_background.counter_adjust(instance_id, -1)
+                else:
+                    self.data_background_direct[instance_id] = file_loader
+            elif filetype in FILETYPES_CHARACTER:
+                self.data_character[instance_id] = file_loader
                 if not count_increase:
-                    self.data_background.counter_adjust(instance_id, -1)
+                    self.data_character.counter_adjust(instance_id, -1)
         else:
             raise ValueError
 
@@ -80,6 +90,10 @@ class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
         d = super().to_json()
         d["data_track"] = counter_dict_sorter(self.data_track.get_counter_with_data_sorted_by_counter(),
                                               ["track_type", "no"])
+        d["data_background_direct"] = counter_dict_sorter(self.data_background_direct.get_counter_with_data_sorted_by_counter(),
+                                                          ["filename"])
+        d["data_character"] = counter_dict_sorter(self.data_character.get_counter_with_data_sorted_by_counter(),
+                                                  [["name", "path_name"], ["name", "en"]])
         return d
 
 

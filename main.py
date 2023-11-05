@@ -22,6 +22,7 @@ ALBUMS = get_loader_by_filepath([], r"data/album", None)
 FolderLoaderAccesser(TAGS, TRACKS, BACKGROUNDS, CHARACTERS, STORIES, BATTLES, UIS, VIDEOS, EVENTS, ALBUMS)
 PostExecutionManager.execute_pool("related_to")
 PostExecutionManager.execute_pool("reference_data")
+PostExecutionManager.execute_pool("background_character_direct")
 print(f"Linking Stuff Together: {time.time() - start_time:0.2f}")
 
 BASE_EXPORT = "data_export"

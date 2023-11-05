@@ -98,11 +98,13 @@ class PostExecutionManager:
 
     @classmethod
     def execute_pool(cls, pool_name: str):
-        try:
-            for i in cls._post_pool[pool_name]:
-                i[0](*i[1])
-        except KeyError:
+        if pool_name not in cls._post_pool.keys():
             logging.warning(f"No such pool: {pool_name}")
+            return
+
+        for i in cls._post_pool[pool_name]:
+            i[0](*i[1])
+
 
     @classmethod
     def execute_all(cls):
@@ -113,37 +115,21 @@ class PostExecutionManager:
 class ObjectAccessProxier:
     """提供一种代理方式来访问对象"""
 
-    def __init__(self, obj):
+    def __init__(self, obj, custom_get: dict = None):
         self._object = obj
-        self.set_default_policy()
 
-    def set_default_policy(self):
-        self.allow_del = False
-        self.allow_set = False
-        self.allow_get = True
+        self.set_default_policy(custom_get)
 
+    def set_default_policy(self, custom_get: dict = None):
         # 自定义返回内容
-        self.custom_get = {}
+        self.custom_get = custom_get if custom_get is not None else {}
 
-    def __getattribute__(self, item):
-        if not self.allow_get:
-            raise PermissionError
+    def __getattr__(self, attr: str):
+        if attr in self.custom_get.keys():
+            return self.custom_get[attr]
 
-        if item in self.custom_get.keys():
-            return self.custom_get[item]
-        return getattr(self._object, item)
+        return getattr(self._object, attr)
 
-    def __setattr__(self, key, value):
-        if not self.allow_set:
-            raise PermissionError
-
-        setattr(self._object, key, value)
-
-    def __delattr__(self, item):
-        if not self.allow_del:
-            raise PermissionError
-
-        delattr(self._object, item)
 
 def seconds_to_minutes(seconds: int):
     return seconds // 60, seconds % 60

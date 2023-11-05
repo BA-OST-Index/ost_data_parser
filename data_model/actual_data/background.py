@@ -1,11 +1,13 @@
 from ..loader import FileLoader, i18n_translator
 from .used_by import BaseUsedBy, OrderedDictWithCounter, UsedByToJsonMixin, UsedByRegisterMixin
-from ..constant.file_type import FILETYPES_STORY, FILETYPES_TRACK, FILE_STORY_EVENT, FILETYPES_CHARACTER
+from ..constant.file_type import (FILETYPES_STORY, FILETYPES_TRACK, FILE_STORY_EVENT, FILETYPES_CHARACTER,
+                                  FILE_BACKGROUND_INFO_DIRECT)
 from ..types.metatype.base_model import BaseDataModelListManager
 from ..types.url import UrlModel
 from ..actual_data.tag import TagListManager
+from ..actual_data.character import CharacterListManager
 from ..tool.interpage import InterpageMixin
-from ..tool.tool import counter_dict_sorter
+from ..tool.tool import counter_dict_sorter, PostExecutionManager, ObjectAccessProxier
 
 
 class BackgroundUsedBy(BaseUsedBy, UsedByToJsonMixin):
@@ -61,12 +63,20 @@ class BackgroundInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
         self.image.load(self.data["image"])
 
         self.used_by = BackgroundUsedBy()
+        self.character = CharacterListManager()
 
         self.extra_register()
+        PostExecutionManager.add_to_pool(self.character.load, self.data.get("character", []),
+                                         pool_name="background_character_direct")
+        PostExecutionManager.add_to_pool(self.register_character, pool_name="background_character_direct")
 
     def extra_register(self):
         for tag in self.tag.tag:
             tag.register(self)
+
+    def register_character(self):
+        for i in self.character.character:
+            i.register(ObjectAccessProxier(self, {"filetype": FILE_BACKGROUND_INFO_DIRECT}))
 
     @staticmethod
     def _get_instance_id(data: dict):
@@ -82,6 +92,7 @@ class BackgroundInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
             "desc": self.desc.to_json_basic(),
             "tag": self.tag.to_json_basic(),
             "image": self.image.to_json_basic(),
+            "character": self.character.to_json_basic(),
             "used_by": self.used_by.to_json_basic(),
             "interpage": self.get_interpage_data()
         }
@@ -95,6 +106,7 @@ class BackgroundInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
             "name": self.name.to_json_basic(),
             "desc": self.desc.to_json_basic(),
             "image": self.image.to_json_basic(),
+            "character": self.character.to_json_basic(),
             "interpage": self.get_interpage_data()
         }
 

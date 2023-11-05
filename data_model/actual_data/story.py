@@ -52,22 +52,13 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
         # Register itself to every track in StoryInfoPartListManager
         # For every story (not story parts) it should only be registered for once
         registered = []
-        # last_track 用于模拟一种更加接近于现实的使用情况
-        # 其方式为：记录当前part的最后一首曲子，与后面那个part的第一首曲子对比
-        # 如果是新曲子，就+1
-        last_track = None
 
         for part in self.part.part:
             for segment in part.segments:
-                if last_track is None:
-                    if len(segment.track.track) != 0:
-                        last_track = segment.track.track[0]
-                        last_track.register(self)
                 for track in segment.track.track:
-                    if track is not last_track:
+                    if track not in registered:
                         track.register(self)
-                        last_track = track
-
+                        registered.append(track)
                 for char in segment.character.character:
                     if char not in registered:
                         char.register(self)
@@ -96,6 +87,17 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
                         if char not in registered[track]:
                             track.register(char)
                             registered[track].append(char)
+
+                    for char2 in segment.character.character:
+                        if char not in registered.keys(): registered[char] = []
+                        if char2 not in registered.keys(): registered[char2] = []
+
+                        if char2 not in registered[char]:
+                            char.register(char2)
+                            registered[char].append(char2)
+                        if char not in registered[char2]:
+                            char2.register(char)
+                            registered[char2].append(char)
 
                 # For BackgroundInfo
                 for background in segment.background.background:

@@ -62,7 +62,8 @@ class ZhLangStringModel(LangStringModel):
     def get_content(self, lang_code: str, raise_error: bool = False):
         """Partially rewrite for zh_cn support."""
         def get_zh_cn():
-            return self.zh_cn_tw or self.zh_cn_jp or self.zh_cn_cn
+            # zh_cn也自动fallback到英语或繁中
+            return self.zh_cn_tw or self.zh_cn_jp or self.zh_cn_cn or self.en or self.zh_tw
 
         def get_other():
             return self.en or self.zh_tw or get_zh_cn()
