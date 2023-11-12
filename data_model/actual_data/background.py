@@ -46,6 +46,8 @@ class BackgroundUsedBy(BaseUsedBy, UsedByToJsonMixin):
         d = super().to_json()
         d["data_track"] = counter_dict_sorter(self.data_track.get_counter_with_data_sorted_by_counter(),
                                               ["track_type", "no"])
+        d["data_character"] = counter_dict_sorter(self.data_character.get_counter_with_data_sorted_by_counter(),
+                                                  ["filename"])
         return d
 
 

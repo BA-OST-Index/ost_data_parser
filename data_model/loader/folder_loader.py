@@ -107,7 +107,13 @@ class StoryLoader(GenericFolder):
 
 
 class UiLoader(GenericFolder):
-    pass
+    def __init__(self, namespace: list, basepath, json_data=None, parent_data=None):
+        super().__init__(namespace, basepath, json_data, parent_data)
+
+    def auto_include(self):
+        temp = super().auto_include()
+        temp.sort(key=self.sort_by_int)
+        return temp
 
 
 class BattleLoader(GenericFolder):
@@ -235,4 +241,10 @@ class CharacterLoader(FolderLoader):
 
 
 class AlbumLoader(GenericFolder):
-    pass
+    def __init__(self, namespace: list, basepath, json_data=None, parent_data=None):
+        super().__init__(namespace, basepath, json_data, parent_data)
+
+    def auto_include(self):
+        temp = super().auto_include()
+        temp.sort(key=self.sort_by_int)
+        return temp

@@ -89,6 +89,9 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
                             registered[track].append(char)
 
                     for char2 in segment.character.character:
+                        if char.uuid == char2.uuid:
+                            continue
+
                         if char not in registered.keys(): registered[char] = []
                         if char2 not in registered.keys(): registered[char2] = []
 
@@ -112,6 +115,16 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
                         if background not in registered[track]:
                             track.register(background)
                             registered[track].append(background)
+
+                    for char in segment.character.character:
+                        if char not in registered.keys(): registered[char] = []
+
+                        if char not in registered[background]:
+                            background.register(char)
+                            registered[background].append(char)
+                        if background not in registered[char]:
+                            char.register(background)
+                            registered[char].append(background)
 
 
     @staticmethod

@@ -79,6 +79,10 @@ class FolderLoader(NamespacePathMixin, IToJson, ParentDataMixin):
 
         return including
 
+    @staticmethod
+    def sort_by_int(item):
+        return int(item[:-5])
+
     def process(self):
         from .loader_detect import get_loader_by_filepath
         for (n, i) in enumerate(self.including):

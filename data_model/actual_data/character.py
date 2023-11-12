@@ -94,6 +94,8 @@ class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
                                                           ["filename"])
         d["data_character"] = counter_dict_sorter(self.data_character.get_counter_with_data_sorted_by_counter(),
                                                   [["name", "path_name"], ["name", "en"]])
+        d["data_background"] = counter_dict_sorter(self.data_background.get_counter_with_data_sorted_by_counter(),
+                                                          ["filename"])
         return d
 
 
@@ -346,14 +348,16 @@ class StudentInfo(CharacterInfo):
             "prev": {
                 "name": {
                     "path_name": prev.path_name if prev else "[NO_PREV]",
-                    "dev_name": prev.dev_name if prev else "[NO_PREV]"
+                    "dev_name": prev.dev_name if prev else "[NO_PREV]",
+                    "name": prev.name.to_json() if prev else "[NO_PREV]"
                 },
                 "namespace": prev.namespace if prev else "[NO_PREV]"
             },
             "next": {
                 "name": {
                     "path_name": next.path_name if next else "[NO_NEXT]",
-                    "dev_name": next.dev_name if next else "[NO_NEXT]"
+                    "dev_name": next.dev_name if next else "[NO_NEXT]",
+                    "name": next.name.to_json() if next else "[NO_NEXT]"
                 },
                 "namespace": next.namespace if next else "[NO_NEXT]"
             }

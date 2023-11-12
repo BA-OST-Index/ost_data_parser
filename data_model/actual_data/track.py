@@ -129,6 +129,8 @@ class TrackUsedBy(BaseUsedBy, UsedByToJsonMixin):
         d = super().to_json()
         d["data_character"] = counter_dict_sorter(self.data_character.get_counter_with_data_sorted_by_counter(),
                                                   [["name", "path_name"], ["name", "en"]])
+        d["data_background"] = counter_dict_sorter(self.data_background.get_counter_with_data_sorted_by_counter(),
+                                                   ["filename"])
         return d
 
 
