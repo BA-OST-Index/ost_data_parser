@@ -1,4 +1,3 @@
-import hashlib
 from ..loader import FileLoader
 from ..tool.parent_data import IParentData
 from ..tool.interpage import InterpageMixin

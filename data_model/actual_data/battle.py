@@ -145,7 +145,7 @@ class TotalAssaultInfo(BaseBattleInfo):
 
         self.image = UrlModel()
         self.image.load(data["image"])
-        self.track = TrackInfo.get_instance(instance_id=data["track"])
+        self.track = TrackListManager()
 
         self.faction_ori = schale_db_manager.query_constant("raids", data["name"], "Faction")
         self.faction = schale_db_manager.query("localization", "BossFaction_" + self.faction_ori)
@@ -154,10 +154,13 @@ class TotalAssaultInfo(BaseBattleInfo):
         self.name = schale_db_manager.query("raids", data["name"], "Name")
         self.profile = schale_db_manager.query("raids", data["name"], "Profile")
 
+        self.track.load(data["track"])
+
         self.extra_register()
 
     def extra_register(self):
-        self.track.register(self)
+        for i in self.track.track:
+            i.register(self)
 
     @staticmethod
     def _get_instance_id(data: dict):
@@ -379,15 +382,18 @@ class WorldRaidBattleInfo(BaseBattleInfo):
 
         self.image = UrlModel()
         self.image.load(data["image"])
-        self.track = TrackInfo.get_instance(instance_id=data["track"])
+        self.track = TrackListManager()
 
         self.name_ori = schale_db_manager.query_constant("world_raids", data["name"], "PathName")
         self.name = schale_db_manager.query("world_raids", data["name"], "Name")
 
+        self.track.load(data["track"])
+
         self.extra_register()
 
     def extra_register(self):
-        self.track.register(self)
+        for i in self.track.track:
+            i.register(self)
 
     @staticmethod
     def _get_instance_id(data: dict):
