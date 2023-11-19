@@ -1,0 +1,26 @@
+name: Pull Request
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
+        fetch-depth: 0
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Update submodules
+      run: |
+        git submodule update --remote
+
+    # Run main script to test if it can work
+    - name: Run main.py
+      run: python main.py
