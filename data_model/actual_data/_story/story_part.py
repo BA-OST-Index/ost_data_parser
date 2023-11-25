@@ -1,8 +1,10 @@
 from data_model.loader import i18n_translator
 from data_model.tool.to_json import IToJson
+from data_model.tool.tool import ObjectAccessProxier
 from data_model.actual_data.track import TrackListManager
 from data_model.actual_data.background import BackgroundListManager
 from data_model.actual_data.character import CharacterListManager
+from data_model.constant.file_type import FLAG_STORY_BATTLE
 from collections import UserList
 from .story_source_part import StoryInfoPartVideo
 
@@ -122,6 +124,8 @@ class StoryInfoPartListManager(IToJson):
                 # Normal case
                 if p.is_battle and p.segments[0].track.track[0] not in self.bgm_special:
                     self.bgm_special.append(p.segments[0].track.track[0])
+                    self.bgm_special[-1].register(ObjectAccessProxier(None, {"filetype": FLAG_STORY_BATTLE,
+                                                                             "instance_id": ""}))
             except Exception:
                 try:
                     # Bond case

@@ -37,7 +37,6 @@ class TrackStats(VirtualLoader):
             sorted_tracks = sorted(category.including, key=lambda i: int(i[0][:-5]))
             for track in sorted_tracks:
                 tracks.append(track.loader)
-                track.loader.load_special_case()
 
         # categorize tracks
         self.is_ost, self.is_story, self.is_battle, self.is_recollection, self.is_event = [], [], [], [], []

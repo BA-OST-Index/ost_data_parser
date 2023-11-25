@@ -105,7 +105,6 @@ class PostExecutionManager:
         for i in cls._post_pool[pool_name]:
             i[0](*i[1])
 
-
     @classmethod
     def execute_all(cls):
         for i in cls._post_pool.keys():
@@ -115,8 +114,16 @@ class PostExecutionManager:
 class ObjectAccessProxier:
     """提供一种代理方式来访问对象"""
 
+    class BlankObject:
+        pass
+
+    blank_object = BlankObject()
+
     def __init__(self, obj, custom_get: dict = None):
-        self._object = obj
+        if obj is None:
+            self._object = self.blank_object
+        else:
+            self._object = obj
 
         self.set_default_policy(custom_get)
 

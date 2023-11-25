@@ -11,7 +11,8 @@ from data_model.actual_data.related_to import BaseRelatedTo, RelatedToJsonMixin,
 from data_model.actual_data._track.track_version import *
 from data_model.constant.file_type import FILETYPES_STORY, FILETYPES_BATTLE, FILETYPES_BACKGROUND, \
     FILE_VIDEO_INFO, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT, FILE_UI_EVENT, FILE_UI_CHILD, \
-    FILETYPES_CHARACTER, FILE_STUDENT_INFO
+    FILETYPES_CHARACTER, FILE_STUDENT_INFO, \
+    FILE_STORY_BOND, FLAG_STORY_BATTLE
 from data_model.actual_data.tag import TagListManager
 from data_model.tool.tool import seconds_to_minutes
 from data_model.tool.interpage import InterpageMixin
@@ -56,10 +57,13 @@ class TrackRelatedTo(BaseRelatedTo, RelatedToJsonMixin):
 
 class TrackUsedBy(BaseUsedBy, UsedByToJsonMixin):
     SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_BATTLE, *FILETYPES_BACKGROUND, FILE_VIDEO_INFO,
-                          FILE_STORY_EVENT, FILE_BATTLE_EVENT, FILE_UI_EVENT, FILE_UI_CHILD, *FILETYPES_CHARACTER]
+                          FILE_STORY_EVENT, FILE_BATTLE_EVENT, FILE_UI_EVENT, FILE_UI_CHILD, *FILETYPES_CHARACTER,
+                          FLAG_STORY_BATTLE]
     _components = ["data_background", "data_story", "data_battle", "data_ui", "data_video", "data_character"]
 
-    def __init__(self):
+    def __init__(self, track):
+        self.track_obj = track
+
         self.data_background = OrderedDictWithCounter()
         self.data_story = OrderedDictWithCounter()
         self.data_battle = OrderedDictWithCounter()
@@ -68,7 +72,8 @@ class TrackUsedBy(BaseUsedBy, UsedByToJsonMixin):
         self.data_character = OrderedDictWithCounter()
 
     def register(self, file_loader: FileLoader, count_increase=True):
-        try: filetype = file_loader.filetype
+        try:
+            filetype = file_loader.filetype
         except AttributeError:
             # currently, only students don't have a filetype
             filetype = FILE_STUDENT_INFO
@@ -76,14 +81,36 @@ class TrackUsedBy(BaseUsedBy, UsedByToJsonMixin):
         instance_id = file_loader.instance_id
 
         if filetype in self.SUPPORTED_FILETYPE:
+            # story
             if filetype in [*FILETYPES_STORY, FILE_STORY_EVENT]:
                 self.data_story[instance_id] = file_loader
                 if not count_increase:
                     self.data_story.counter_adjust(instance_id, -1)
+
+                # story stats
+                if filetype == FILE_STORY_EVENT:
+                    self.track_obj.set_stat("is_story_event", True)
+                elif filetype == FILE_STORY_BOND:
+                    # bond story
+                    for i in file_loader.part.bgm_special:
+                        if i.instance_id == self.track_obj.instance_id:
+                            self.track_obj.set_stat("is_story_memory", True)
+                else:
+                    self.track_obj.set_stat("is_story_main", True)
+            # battle
             elif filetype in [*FILETYPES_BATTLE, FILE_BATTLE_EVENT]:
                 self.data_battle[instance_id] = file_loader
                 if not count_increase:
                     self.data_battle.counter_adjust(instance_id, -1)
+
+                # battle stats
+                if filetype == FILE_BATTLE_EVENT:
+                    self.track_obj.set_stat("is_battle_event", True)
+                else:
+                    self.track_obj.set_stat("is_battle_main", True)
+            # story battle flag (special case)
+            elif filetype == FLAG_STORY_BATTLE:
+                self.track_obj.set_stat("is_battle_story", True)
             elif filetype in [FILE_UI_EVENT, FILE_UI_CHILD]:
                 self.data_ui[instance_id] = file_loader
                 if not count_increase:
@@ -153,41 +180,56 @@ class ComposerUsedBy(BaseUsedBy, UsedByToJsonMixin):
             raise ValueError
 
 
-class TrackSpecialCase:
-    _all = ["is_ost", "is_bond_memory", "is_story", "is_battle", "is_event"]
-    _counter = {key: [] for key in _all}
+class TrackStats(IToJson):
+    existing_data = ["is_ba", "is_jp", "is_global", "is_cn",
+                     "is_segment", "is_sub"]
+    all_data = ["is_ost", "is_ani", "is_short", "is_other",
+                "is_ba", "is_jp", "is_global", "is_cn",
+                "is_story", "is_story_main", "is_story_memory", "is_story_event",
+                "is_battle", "is_battle_main", "is_battle_story", "is_battle_event",
+                "is_segment", "is_sub", "has_related"]
 
-    def __init__(self, key_name):
-        pass
-
-    def load(self, data: dict, track_info):
+    def __init__(self, data: dict):
         self.data = data
-        for i, y in self.data.items():
-            setattr(self, i, y)
-            if y:
-                self._counter[i].append(track_info)
+
+        self.is_ost, self.is_ani, self.is_short, self.is_other = False, False, False, False
+        self.is_ba, self.is_jp, self.is_global, self.is_cn = False, False, False, False
+        self.is_story, self.is_story_main, self.is_story_memory, self.is_story_event = False, False, False, False
+        self.is_battle, self.is_battle_main, self.is_battle_story, self.is_battle_event = False, False, False, False
+        self.is_segment, self.is_sub, self.has_related = False, False, False
+
+        for i in self.existing_data:
+            setattr(self, i, data[i])
+
+    def second_init(self, track):
+        if track.filetype == 1:
+            self.is_ost = True
+        elif track.filetype == 2:
+            self.is_short = True
+        elif track.filetype == 3:
+            self.is_ani = True
+        elif track.filetype == 4:
+            self.is_other = False
+
+        if len(track.related_to.data["track_other"]) != 0:
+            self.has_related = True
+
+    def set_stat(self, stat_name, flag=True):
+        setattr(self, stat_name, flag)
+
+        if "story" in stat_name:
+            self.is_story = True
+        elif "battle" in stat_name:
+            self.is_battle = True
 
     def to_json(self):
-        return self.data
+        d = {}
+        for i in self.all_data:
+            d[i] = getattr(self, i)
+        return d
 
     def to_json_basic(self):
         return self.to_json()
-
-    @classmethod
-    def get_counter(cls):
-        return cls._counter
-
-    @classmethod
-    def export_counter_json(cls):
-        t = dict((key, list(track.to_json() for track in value))
-                 for key, value in cls._counter.items())
-        return t
-
-    @classmethod
-    def export_counter_json_basic(cls):
-        t = dict((key, list(track.to_json_basic() for track in value))
-                 for key, value in cls._counter.items())
-        return t
 
 
 class TrackName(BaseDataModel):
@@ -351,9 +393,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
         # Song Description, using LangStringModel
         self.desc = i18n_translator[data["desc"]]
 
-        # Special Case Usage
-        # DO NOT load the data until all the relations data being imported!
-        self.special_case = TrackSpecialCase('special_case')
+        self.stats = TrackStats(data["stats"])
 
         # Other stuff
         self.composer = Composer().load(data["composer"])
@@ -361,7 +401,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
         self.tags = TrackTags('tags', self)
         self.version = TrackVersionListManager('version')
         self.name = TrackName('name')
-        self.used_by = TrackUsedBy()
+        self.used_by = TrackUsedBy(self)
         self.reference = UrlModelListManager('reference')
         self.image = UrlModel()
         self.album = []
@@ -384,13 +424,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
         track_type = TrackInfo._filetype_id_map[str(data["track_type"])]
         return "_".join([track_type, no])
 
-    def load_special_case(self):
-        t = self.used_by.get_special_case_info()
-        t["is_ost"] = True if self.track_type == 0 else False
-        self.special_case.load(t, self)
-
     def to_json(self):
-        self.load_special_case()
         t = {
             "uuid": self.uuid,
             "filetype": self.filetype,
@@ -409,7 +443,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
             "composer": self.composer.to_json_basic(),
             "tags": self.tags.to_json_basic(),
             "version": self.version.to_json_basic(),
-            "special_case": self.special_case.to_json_basic(),
+            "special_case": self.stats.to_json_basic(),
             "album": [i.to_json_basic() for i in self.album],
             "reference": self.reference.to_json_basic(),
             "used_by": self.used_by.to_json_basic(),
@@ -420,7 +454,6 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
         return t
 
     def to_json_basic(self):
-        self.load_special_case()
         t = {
             "uuid": self.uuid,
             "no": self.no,
@@ -433,7 +466,8 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
             "composer": self.composer.to_json_basic(),
             "image": self.image.to_json_basic(),
             "album": [i.to_json_basic() for i in self.album],
-            "interpage": self.get_interpage_data()
+            "interpage": self.get_interpage_data(),
+            "special_case": self.stats.to_json_basic(),
         }
         return t
 
@@ -448,6 +482,9 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
             return self._instance["_".join([t[0], str(no)])]
         except KeyError:
             return None
+
+    def set_stat(self, stat_name, value):
+        self.stats.set_stat(stat_name, value)
 
 
 class TrackListManager(BaseDataModelListManager):
