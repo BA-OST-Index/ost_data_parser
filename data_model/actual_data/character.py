@@ -113,7 +113,16 @@ class CharacterInfo(FileLoader, InterpageMixin, UsedByRegisterMixin, RelatedToRe
                 # Otherwise it must be an NPC
                 temp = super().get_instance(instance_id="NPC_" + instance_id)
             except Exception:
-                raise
+                try:
+                    # 不然的话可能是学生的一个variant（比如运动服、女仆装），但是没实装
+                    # 这个时候就根据“_”只保留学生主名字，将内容链接到主variant上
+                    instance_id = instance_id.split("_")[0]
+                    temp = super().get_instance(instance_id="STU_" + instance_id)
+                except Exception as e:
+                    # 还没有的话建议直接raise
+                    raise e
+                else:
+                    return temp
             else:
                 return temp
         else:
