@@ -443,7 +443,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
             "composer": self.composer.to_json_basic(),
             "tags": self.tags.to_json_basic(),
             "version": self.version.to_json_basic(),
-            "special_case": self.stats.to_json_basic(),
+            "stats": self.stats.to_json_basic(),
             "album": [i.to_json_basic() for i in self.album],
             "reference": self.reference.to_json_basic(),
             "used_by": self.used_by.to_json_basic(),
@@ -467,7 +467,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
             "image": self.image.to_json_basic(),
             "album": [i.to_json_basic() for i in self.album],
             "interpage": self.get_interpage_data(),
-            "special_case": self.stats.to_json_basic(),
+            "stats": self.stats.to_json_basic(),
         }
         return t
 
