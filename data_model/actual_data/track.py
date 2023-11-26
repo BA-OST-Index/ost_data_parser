@@ -393,8 +393,6 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
         # Song Description, using LangStringModel
         self.desc = i18n_translator[data["desc"]]
 
-        self.stats = TrackStats(data["stats"])
-
         # Other stuff
         self.composer = Composer().load(data["composer"])
         self.composer.register(self)
@@ -410,6 +408,9 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
             self.related_to = TrackRelatedTo(self, data["related_to"])
         else:
             self.related_to = TrackRelatedTo(self, TrackRelatedTo.BLANK_DATA)
+
+        self.stats = TrackStats(data["stats"])
+        self.stats.second_init(self)
 
         # Load Data
         self.name.load(data["name"])
@@ -464,6 +465,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
             "name": self.name.to_json_basic(),
             "desc": self.desc.to_json_basic(),
             "composer": self.composer.to_json_basic(),
+            "tags": self.tags.to_json_basic(),
             "image": self.image.to_json_basic(),
             "album": [i.to_json_basic() for i in self.album],
             "interpage": self.get_interpage_data(),
