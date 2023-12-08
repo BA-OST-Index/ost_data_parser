@@ -73,6 +73,7 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
         registered = {}
 
         for part in self.part.part:
+            # 一般的都在segment精度追踪
             for segment in part.segments:
                 # For CharacterInfo
                 # register every TrackInfo to CharacterInfo
@@ -87,20 +88,6 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
                         if char not in registered[track]:
                             track.register(char)
                             registered[track].append(char)
-
-                    for char2 in segment.character.character:
-                        if char.uuid == char2.uuid:
-                            continue
-
-                        if char not in registered.keys(): registered[char] = []
-                        if char2 not in registered.keys(): registered[char2] = []
-
-                        if char2 not in registered[char]:
-                            char.register(char2)
-                            registered[char].append(char2)
-                        if char not in registered[char2]:
-                            char2.register(char)
-                            registered[char2].append(char)
 
                 # For BackgroundInfo
                 for background in segment.background.background:
@@ -125,6 +112,26 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
                         if background not in registered[char]:
                             char.register(background)
                             registered[char].append(background)
+
+            # 以下是专门为char-char（in story）进行
+            # 该部分数据仅精确到part
+            part_characters = list(set([char for segment in part.segments for char in segment.character.character]))
+            for char in part_characters:
+                for char2 in part_characters:
+                    if char.uuid == char2.uuid:
+                        continue
+
+                    if char not in registered.keys():
+                        registered[char] = []
+                    if char2 not in registered.keys():
+                        registered[char2] = []
+
+                    if char2 not in registered[char]:
+                        char.register(char2)
+                        registered[char].append(char2)
+                    if char not in registered[char2]:
+                        char2.register(char)
+                        registered[char2].append(char)
 
 
     @staticmethod
