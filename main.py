@@ -46,6 +46,7 @@ def create_export_dir(loader):
 
 
 def write_loader(target_loader):
+    """XxxInfo专用"""
     loader = target_loader.loader
     path = loader.get_path(filename=True)
     create_export_dir(loader)
@@ -54,6 +55,7 @@ def write_loader(target_loader):
 
 
 def write_loader2(target_loader):
+    """XxxLoader专用"""
     loader = target_loader
     path = loader.get_path(filename=False)
     os.makedirs(join_base(path), exist_ok=True)
@@ -62,6 +64,7 @@ def write_loader2(target_loader):
 
 
 def write_loader3(target_loader):
+    """VirtualData专用"""
     loader = target_loader
     path = loader.get_path(filename=False)
     os.makedirs(join_base(os.path.split(path)[0]), exist_ok=True)
@@ -70,12 +73,16 @@ def write_loader3(target_loader):
 
 
 start_time = time.time()
+
+
 # export tags
+print("Exporting tag")
 write_loader2(TAGS)
 for i in TAGS.including:
     write_loader(i)
 
 # export tracks
+print("Exporting track")
 write_loader2(TRACKS)
 for track_type in TRACKS.including:
     write_loader2(track_type.loader)
@@ -83,11 +90,13 @@ for track_type in TRACKS.including:
         write_loader(track)
 
 # export backgrounds
+print("Exporting background")
 write_loader2(BACKGROUNDS)
 for background in BACKGROUNDS.including:
     write_loader(background)
 
 # export characters
+print("Exporting character")
 write_loader2(CHARACTERS)
 for char_type in CHARACTERS.including:
     write_loader2(char_type.loader)
@@ -108,6 +117,7 @@ for char_type in CHARACTERS.including:
                     write_loader(bond)
 
 # export stories
+print("Exporing story")
 write_loader2(STORIES)
 for story_type in STORIES.including:
     write_loader2(story_type.loader)
@@ -119,6 +129,7 @@ for story_type in STORIES.including:
                 write_loader(segment)
 
 # export battle
+print("Exporting battle")
 write_loader2(BATTLES)
 for battle_type in BATTLES.including:
     write_loader2(battle_type.loader)
@@ -133,16 +144,19 @@ for battle_type in BATTLES.including:
             write_loader(segment)
 
 # export ui
+print("Exporting UI")
 write_loader2(UIS)
 for ui in UIS.including:
     write_loader(ui)
 
 # export videos
+print("Exporting video")
 write_loader2(VIDEOS)
 for video in VIDEOS.including:
     write_loader(video)
 
 # export events
+print("Exporting event")
 write_loader2(EVENTS)
 for event_id in EVENTS.including:
     write_loader2(event_id.loader)
@@ -152,6 +166,7 @@ for event_id in EVENTS.including:
             write_loader(file)
 
 # export albums
+print("Exporting album")
 write_loader2(ALBUMS)
 for album in ALBUMS.including:
     write_loader(album)

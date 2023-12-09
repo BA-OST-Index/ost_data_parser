@@ -5,10 +5,10 @@ from data_model.types.url import UrlModel
 from data_model.loader import i18n_translator
 from data_model.types.lang_string import LangStringModelList
 from data_model.loader import FileLoader
-from data_model.constant.file_type import FILE_STORY_MAIN, FILE_STORY_SIDE, FILE_STORY_SHORT, FILE_STORY_EVENT,\
+from data_model.constant.file_type import FILE_STORY_MAIN, FILE_STORY_SIDE, FILE_STORY_SHORT, FILE_STORY_EVENT, \
     FILE_STORY_OTHER
 from ._story.story_part import StoryInfoPartListManager
-from ._story.story_source_all import StoryInfoVideo
+from ._story.story_source_all import StoryInfoSource
 from ..tool.parent_data import IParentData
 from ..tool.interpage import InterpageMixin
 from collections import OrderedDict
@@ -30,10 +30,9 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
 
         self.name = i18n_translator[data["name"]]
         self.pos = storyPosAuto(data["pos"])
-        self.part = StoryInfoPartListManager(data["part"], self)
         self.image = UrlModel()
-        # TODO: StoryInfoSource
-        # self.video = StoryInfoVideo(data.get("video", {}))
+        self.source = StoryInfoSource(data.get("source", {}))
+        self.part = StoryInfoPartListManager(data["part"], self)
         self.image.load(self.data["image"])
 
         # Special case: some stories still have content after the battle,
@@ -44,7 +43,8 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
         if isinstance(data["desc"], str):
             self.desc.append(i18n_translator[data["desc"]])
         else:
-            for i in data["desc"]: self.desc.append(i18n_translator[i])
+            for i in data["desc"]:
+                self.desc.append(i18n_translator[i])
 
         self.extra_register()
 
@@ -79,8 +79,10 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
                 # register every TrackInfo to CharacterInfo
                 for char in segment.character.character:
                     for track in segment.track.track:
-                        if char not in registered.keys(): registered[char] = []
-                        if track not in registered.keys(): registered[track] = []
+                        if char not in registered.keys():
+                            registered[char] = []
+                        if track not in registered.keys():
+                            registered[track] = []
 
                         if track not in registered[char]:
                             char.register(track)
@@ -91,10 +93,12 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
 
                 # For BackgroundInfo
                 for background in segment.background.background:
-                    if background not in registered.keys(): registered[background] = []
+                    if background not in registered.keys():
+                        registered[background] = []
 
                     for track in segment.track.track:
-                        if track not in registered.keys(): registered[track] = []
+                        if track not in registered.keys():
+                            registered[track] = []
 
                         if track not in registered[background]:
                             background.register(track)
@@ -104,7 +108,8 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
                             registered[track].append(background)
 
                     for char in segment.character.character:
-                        if char not in registered.keys(): registered[char] = []
+                        if char not in registered.keys():
+                            registered[char] = []
 
                         if char not in registered[background]:
                             background.register(char)
@@ -133,7 +138,6 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
                         char2.register(char)
                         registered[char2].append(char)
 
-
     @staticmethod
     def _get_instance_id(data: dict):
         story_type = StoryInfo._story_type[data["filetype"]]
@@ -145,7 +149,8 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
         if self.parent_data is None:
             return self.parent_data
         else:
-            l = [self.export_parents_to_json_without_last_parent(i) for i in self.unpack_parents(self.parent_data, False)]
+            l = [self.export_parents_to_json_without_last_parent(i) for i in
+                 self.unpack_parents(self.parent_data, False)]
             return l
 
     def to_json(self):
@@ -161,6 +166,7 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
 
             "part": self.part.to_json(),
             "is_battle": self.is_battle,
+            "source": self.source.to_json_basic(),
             "interpage": self.get_interpage_data()
         }
         if self.is_battle:
@@ -184,7 +190,8 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
             if offset < 0:
                 return None
 
-        try: instance = self._instance[instances_list[self_instance_pos + offset]]
+        try:
+            instance = self._instance[instances_list[self_instance_pos + offset]]
         except (KeyError, IndexError):
             return None
 
@@ -207,10 +214,12 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
         return instance
 
 
-class StoryInfoBond(StoryInfo):
+class StoryInfoBond(FileLoader, IParentData, InterpageMixin):
     """Basically a modified class from StoryInfo"""
+    _instance = OrderedDict()
 
     def __init__(self, **kwargs):
+        super().__init__(data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])
         from .character import StudentInfo
 
         self.data = data = kwargs["data"]
@@ -221,6 +230,7 @@ class StoryInfoBond(StoryInfo):
 
         self.name = i18n_translator[data["name"]]
         self.pos = storyPosAuto(data["pos"])
+        self.source = StoryInfoSource(data.get("source", {}))
 
         self.stu = StudentInfo.get_instance(instance_id=self.pos.student.upper())
 
@@ -232,7 +242,8 @@ class StoryInfoBond(StoryInfo):
         if isinstance(data["desc"], str):
             self.desc.append(i18n_translator[data["desc"]])
         else:
-            for i in data["desc"]: self.desc.append(i18n_translator[i])
+            for i in data["desc"]:
+                self.desc.append(i18n_translator[i])
 
     def after_instantiate(self):
         # To avoid that when creating a student's bond story,
@@ -245,11 +256,20 @@ class StoryInfoBond(StoryInfo):
 
         self.extra_register()
 
+    def extra_register(self):
+        StoryInfo.extra_register(self)
+
     @staticmethod
     def _get_instance_id(data: dict):
         story_pos = data["pos"].values()
         story_pos = [str(i) for i in story_pos]
         return "_".join(["BOND", *story_pos])
+
+    def _get_instance_offset(self, offset: int):
+        return StoryInfo._get_instance_offset(self, offset)
+
+    def parent_data_to_json(self):
+        return StoryInfo.parent_data_to_json(self)
 
     def to_json(self):
         t = {
@@ -263,7 +283,8 @@ class StoryInfoBond(StoryInfo):
             "instance_id": self.instance_id,
 
             "part": self.part.to_json(),
-            "is_memory": self.is_memory
+            "is_memory": self.is_memory,
+            "source": self.source.to_json_basic()
         }
 
         if self.is_memory:
@@ -282,3 +303,7 @@ class StoryInfoBond(StoryInfo):
 
     def to_json_basic(self):
         return self.to_json()
+
+    @classmethod
+    def get_instance(cls, instance_id):
+        return super().get_instance(instance_id)

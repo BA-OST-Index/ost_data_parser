@@ -473,8 +473,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
             "image": self.image.to_json_basic(),
             "album": [i.to_json_basic() for i in self.album],
             "interpage": self.get_interpage_data(),
-            "stats": self.stats.to_json_basic(),
-            "bond_chars": [i.to_json_basic() for i in self.bond_chars]
+            "stats": self.stats.to_json_basic()
         }
         return t
 

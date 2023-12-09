@@ -6,7 +6,7 @@ from data_model.actual_data.background import BackgroundListManager
 from data_model.actual_data.character import CharacterListManager
 from data_model.constant.file_type import FLAG_STORY_BATTLE
 from collections import UserList
-from .story_source_part import StoryInfoPartVideo
+from .story_source_part import StoryInfoPartSource
 
 
 class StoryInfoPartSegment(IToJson):
@@ -21,22 +21,6 @@ class StoryInfoPartSegment(IToJson):
         self.track.load(self.data["track"])
         self.character.load(self.data["character"])
         self.background.load(self.data["background"])
-
-        # self.extra_register()
-
-    def extra_register(self):
-        for char in self.character.character:
-            for track in self.track.track:
-                char.register(track, False)
-                track.register(char, False)
-
-        for background in self.background.background:
-            for track in self.track.track:
-                track.register(background, False)
-                background.register(track, False)
-            for character in self.character.character:
-                character.register(background, False)
-                background.register(character, False)
 
     def to_json(self):
         return {
@@ -78,8 +62,7 @@ class StoryInfoPart(IToJson):
         else:
             self.segments.load(data["data"])
 
-        # TODO: StoryInfoPartSource
-        # self.video = StoryInfoPartVideo(data.get("video", {}), story_obj)
+        self.source = StoryInfoPartSource(data.get("source", {}), story_obj.source)
 
         self._story_obj = story_obj
 
@@ -95,12 +78,14 @@ class StoryInfoPart(IToJson):
 
     def to_json_basic(self):
         d = {"name": self.name.to_json_basic(),
-             "data": [{"desc": i.desc.to_json_basic()} for i in self.segments]}
+             "data": [{"desc": i.desc.to_json_basic()} for i in self.segments],
+             "source": self.source.to_json_basic()}
         return d
 
     def to_json(self):
         d = {"name": self.name.to_json(),
-             "data": self.segments.to_json()}
+             "data": self.segments.to_json(),
+             "source": self.source.to_json()}
 
         if "is_battle" in self.data.keys():
             d["is_battle"] = self.is_battle
