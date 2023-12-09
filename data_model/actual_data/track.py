@@ -412,6 +412,8 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
         self.stats = TrackStats(data["stats"])
         self.stats.second_init(self)
 
+        self.bond_chars = []
+
         # Load Data
         self.name.load(data["name"])
         self.reference.load(data["reference"])
@@ -451,6 +453,8 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
             "related_to": self.related_to.to_json_basic(),
             "image": self.image.to_json_basic(),
             "interpage": self.get_interpage_data(),
+
+            "bond_chars": [i.to_json_basic() for i in self.bond_chars]
         }
         return t
 
@@ -470,6 +474,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
             "album": [i.to_json_basic() for i in self.album],
             "interpage": self.get_interpage_data(),
             "stats": self.stats.to_json_basic(),
+            "bond_chars": [i.to_json_basic() for i in self.bond_chars]
         }
         return t
 

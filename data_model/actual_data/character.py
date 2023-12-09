@@ -191,7 +191,7 @@ class NpcInfo(CharacterInfo):
         return "NPC_" + data["namespace"].upper()
 
     @classmethod
-    def get_instance(cls, instance_id):
+    def get_instance(cls, instance_id) -> "NpcInfo":
         return super().get_instance(instance_id)
 
 
@@ -245,11 +245,25 @@ class StudentInfo(CharacterInfo):
         self._attack_type = schale_db_manager.query_constant("students", self.char_name, "BulletType")
         self._armor_type = schale_db_manager.query_constant("students", self.char_name, "ArmorType")
 
+        self._bond_track = None
+
         self.used_by = CharacterUsedBy()
         if "related_to" not in kwargs["data"].keys():
             self.related_to = CharacterRelatedTo(self, CharacterRelatedTo.BLANK_DATA)
         else:
             self.related_to = CharacterRelatedTo(self, kwargs["data"]["related_to"])
+
+    @property
+    def bond_track(self):
+        return self._bond_track
+
+    @bond_track.setter
+    def bond_track(self, value):
+        if self._bond_track is not None:
+            raise RuntimeError("Cannot set bond track after the bond track has been set!")
+
+        self._bond_track = value
+        value.bond_chars.append(self)
 
     @staticmethod
     def _get_instance_id(data: dict):
@@ -307,7 +321,9 @@ class StudentInfo(CharacterInfo):
                     "lang": self.armor_type.to_json()
                 }
             },
-            "related_to": self.related_to.to_json_basic()
+            "related_to": self.related_to.to_json_basic(),
+
+            "bond_track": self.bond_track.to_json_basic() if self.bond_track else None
         }
 
     def to_json_basic(self):
@@ -345,11 +361,12 @@ class StudentInfo(CharacterInfo):
                     "type": self._armor_type,
                     "lang": self.armor_type.to_json()
                 }
-            }
+            },
+            "bond_track": self.bond_track.to_json_basic() if self.bond_track else None
         }
 
     @classmethod
-    def get_instance(cls, instance_id):
+    def get_instance(cls, instance_id) -> "StudentInfo":
         return super().get_instance(instance_id)
 
     def get_mixed_interpage_data(self, prev, next):

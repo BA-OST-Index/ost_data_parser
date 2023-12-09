@@ -211,6 +211,8 @@ class StoryInfoBond(StoryInfo):
     """Basically a modified class from StoryInfo"""
 
     def __init__(self, **kwargs):
+        from .character import StudentInfo
+
         self.data = data = kwargs["data"]
         self.namespace = kwargs["namespace"]
         self.filetype = data["filetype"]
@@ -219,6 +221,8 @@ class StoryInfoBond(StoryInfo):
 
         self.name = i18n_translator[data["name"]]
         self.pos = storyPosAuto(data["pos"])
+
+        self.stu = StudentInfo.get_instance(instance_id=self.pos.student.upper())
 
         # Special case: some stories still have content after the battle,
         # and in that case, there will be two description text.
@@ -234,6 +238,11 @@ class StoryInfoBond(StoryInfo):
         # To avoid that when creating a student's bond story,
         # it can't find itself since it's in the process of being created.
         self.part = StoryInfoPartListManager(self.data["part"], self)
+
+        # 如果当前为回忆大厅剧情，则绑定学生的bond_track
+        if self.is_memory:
+            self.stu.bond_track = self.part.bgm_special[0]
+
         self.extra_register()
 
     @staticmethod
