@@ -33,7 +33,6 @@ class StoryPosMainSideShortOther(StoryPos):
     due to their similarity in ordering (can be listed as `volume`,
     `chapter`, `segment` with a total of 3 parts.)
     """
-    volume = Integer('volume')
     chapter = Integer('chapter')
     segment = Integer('segment')
     _components = ["volume", "chapter", "segment"]

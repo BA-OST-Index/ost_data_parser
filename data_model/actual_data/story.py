@@ -266,6 +266,7 @@ class StoryInfoBond(FileLoader, IParentData, InterpageMixin):
         return "_".join(["BOND", *story_pos])
 
     def _get_instance_offset(self, offset: int):
+        # TODO
         return StoryInfo._get_instance_offset(self, offset)
 
     def parent_data_to_json(self):
@@ -284,7 +285,8 @@ class StoryInfoBond(FileLoader, IParentData, InterpageMixin):
 
             "part": self.part.to_json(),
             "is_memory": self.is_memory,
-            "source": self.source.to_json_basic()
+            "source": self.source.to_json_basic(),
+            "interpage": self.get_interpage_data()
         }
 
         if self.is_memory:
