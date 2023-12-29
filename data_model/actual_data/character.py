@@ -90,12 +90,13 @@ class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
         d = super().to_json()
         d["data_track"] = counter_dict_sorter(self.data_track.get_counter_with_data_sorted_by_counter(),
                                               ["track_type", "no"])
-        d["data_background_direct"] = counter_dict_sorter(self.data_background_direct.get_counter_with_data_sorted_by_counter(),
-                                                          ["filename"])
+        d["data_background_direct"] = counter_dict_sorter(
+            self.data_background_direct.get_counter_with_data_sorted_by_counter(),
+            ["filename"])
         d["data_character"] = counter_dict_sorter(self.data_character.get_counter_with_data_sorted_by_counter(),
                                                   [["name", "path_name"], ["name", "en"]])
         d["data_background"] = counter_dict_sorter(self.data_background.get_counter_with_data_sorted_by_counter(),
-                                                          ["filename"])
+                                                   ["filename"])
         return d
 
 
@@ -370,7 +371,7 @@ class StudentInfo(CharacterInfo):
         return super().get_instance(instance_id)
 
     def get_mixed_interpage_data(self, prev, next):
-        _prev, _next = None, None
+        _prev, _next = {"name": "[NO_PREV]", "namespace": "[NO_PREV]"}, {"name": "[NO_NEXT]", "namespace": "[NO_NEXT]"}
 
         if prev:
             _prev = {
