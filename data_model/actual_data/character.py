@@ -370,23 +370,29 @@ class StudentInfo(CharacterInfo):
         return super().get_instance(instance_id)
 
     def get_mixed_interpage_data(self, prev, next):
-        return {
-            "prev": {
+        _prev, _next = None, None
+
+        if prev:
+            _prev = {
                 "name": {
-                    "path_name": prev.path_name if prev else "[NO_PREV]",
-                    "dev_name": prev.dev_name if prev else "[NO_PREV]",
-                    "name": prev.name.to_json() if prev else "[NO_PREV]"
+                    "path_name": prev.path_name,
+                    "dev_name": prev.dev_name,
+                    "name": prev.name.to_json()
                 },
-                "namespace": prev.namespace if prev else "[NO_PREV]"
-            },
-            "next": {
-                "name": {
-                    "path_name": next.path_name if next else "[NO_NEXT]",
-                    "dev_name": next.dev_name if next else "[NO_NEXT]",
-                    "name": next.name.to_json() if next else "[NO_NEXT]"
-                },
-                "namespace": next.namespace if next else "[NO_NEXT]"
+                "namespace": prev.namespace
             }
+        if next:
+            _next = {
+                "name": {
+                    "path_name": next.path_name,
+                    "dev_name": next.dev_name,
+                    "name": next.name.to_json()
+                },
+                "namespace": next.namespace
+            }
+        return {
+            "prev": _prev if _prev else "[NO_PREV]",
+            "next": _next if _next else "[NO_NEXT]"
         }
 
 
