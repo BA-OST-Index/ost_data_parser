@@ -234,7 +234,7 @@ class CharacterLoader(FolderLoader):
 
         # If the filetype is FILE_DIR_STUDENT_SINGLE or something
         try:
-            d["student"] = self.student.to_json()
+            d["student"] = self.student.to_json_basic()
         except Exception:
             pass
         return d

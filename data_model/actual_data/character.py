@@ -342,8 +342,14 @@ class StudentInfo(CharacterInfo):
                 "collection_bg": self.collection_bg,
                 "collection_texture": str(self._id)  # deprecated by SchaleDB
             },
-            "birthday": self.birthday.to_json_basic(),
-            "school": self.school_long.to_json_basic(),
+            "birthday": {
+                "localized": self.birthday_localized.to_json(),
+                "normalized": self.birthday.to_json()
+            },
+            "school": {
+                "short": self.school.to_json(),
+                "long": self.school_long.to_json()
+            },
             "school_id": self.school_id,
             "club": self.club.to_json_basic(),
             "age": self.age.to_json_basic(),
