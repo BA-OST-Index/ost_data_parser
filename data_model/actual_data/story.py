@@ -11,6 +11,7 @@ from ._story.story_part import StoryInfoPartListManager
 from ._story.story_source_all import StoryInfoSource
 from ..tool.parent_data import IParentData
 from ..tool.interpage import InterpageMixin
+from .reference_data import ReferenceData
 from collections import OrderedDict
 
 
@@ -212,6 +213,26 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
                 return None
 
         return instance
+
+    @property
+    def interpage_prev(self):
+        try:
+            self.data["interpage"]["prev"]
+        except KeyError:
+            return super().interpage_prev
+        else:
+            ref_data = self.data["interpage"]["prev"]
+            return ReferenceData(ref_data["module_name"], ref_data["model_name"], ref_data["instance_id"]).ref_instance
+
+    @property
+    def interpage_next(self):
+        try:
+            self.data["interpage"]["next"]
+        except KeyError:
+            return super().interpage_next
+        else:
+            ref_data = self.data["interpage"]["next"]
+            return ReferenceData(ref_data["module_name"], ref_data["model_name"], ref_data["instance_id"]).ref_instance
 
 
 class StoryInfoBond(FileLoader, IParentData, InterpageMixin):

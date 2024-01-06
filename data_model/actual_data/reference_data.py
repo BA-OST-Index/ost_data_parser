@@ -34,6 +34,11 @@ class ReferenceData:
         if not self.is_data_loaded():
             raise RuntimeError
 
+    @property
+    def ref_instance(self):
+        self.check_data_loaded()
+        return self._ref_instance
+
 
 class ReferenceFile(FileLoader, InterpageMixin, IParentData):
     _instance = {}
