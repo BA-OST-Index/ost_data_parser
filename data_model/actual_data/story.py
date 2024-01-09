@@ -214,6 +214,26 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
 
         return instance
 
+    @staticmethod
+    def process_reference_data(data: dict):
+        try:
+            if data["module_name"] == "":
+                module_name = "data_model.actual_data.story"
+            else:
+                module_name = data["module_name"]
+        except KeyError:
+            module_name = "data_model.actual_data.story"
+
+        try:
+            if data["model_name"] == "":
+                model_name = "StoryInfo"
+            else:
+                model_name = data["model_name"]
+        except KeyError:
+            model_name = "StoryInfo"
+
+        return (module_name, model_name, data["instance_id"])
+
     @property
     def interpage_prev(self):
         try:
@@ -222,7 +242,7 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
             return super().interpage_prev
         else:
             ref_data = self.data["interpage"]["prev"]
-            return ReferenceData(ref_data["module_name"], ref_data["model_name"], ref_data["instance_id"]).ref_instance
+            return ReferenceData(*self.process_reference_data(ref_data)).ref_instance
 
     @property
     def interpage_next(self):
@@ -232,7 +252,7 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
             return super().interpage_next
         else:
             ref_data = self.data["interpage"]["next"]
-            return ReferenceData(ref_data["module_name"], ref_data["model_name"], ref_data["instance_id"]).ref_instance
+            return ReferenceData(*self.process_reference_data(ref_data)).ref_instance
 
 
 class StoryInfoBond(FileLoader, IParentData, InterpageMixin):
