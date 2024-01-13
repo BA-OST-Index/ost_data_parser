@@ -2,11 +2,12 @@ from ..loader import FileLoader, schale_db_manager, i18n_translator
 from .used_by import BaseUsedBy, OrderedDictWithCounter, UsedByToJsonMixin, UsedByRegisterMixin
 from .related_to import BaseRelatedTo, RelatedToJsonMixin, RelatedToRegisterMixin
 from ..constant.file_type import FILETYPES_STORY, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT, \
-    FILETYPES_CHARACTER, FILETYPES_BACKGROUND, FILE_BACKGROUND_INFO
+    FILETYPES_CHARACTER, FILETYPES_BACKGROUND, FILE_BACKGROUND_INFO, FILE_BACKGROUND_INFO_DIRECT, \
+    FILE_BACKGROUND_INFO_INDIRECT_COMMS
 from ..types.metatype.base_model import BaseDataModelListManager
 from ..types.url import UrlModel
 from ..tool.interpage import InterpageMixin
-from ..tool.tool import counter_dict_sorter, PostExecutionManager
+from ..tool.tool import counter_dict_sorter, PostExecutionManager, ObjectAccessProxier
 
 
 class CharacterRelatedTo(BaseRelatedTo, RelatedToJsonMixin):
@@ -50,13 +51,16 @@ class CharacterRelatedTo(BaseRelatedTo, RelatedToJsonMixin):
 class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
     SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_TRACK, *FILETYPES_BACKGROUND, *FILETYPES_CHARACTER,
                           FILE_STORY_EVENT]
-    _components = ["data_story", "data_track", "data_background", "data_background_direct", "data_character"]
+    _components = ["data_story", "data_track", "data_background", "data_background_direct", "data_background_by_comm",
+                   "data_character"]
 
     def __init__(self):
         self.data_story = OrderedDictWithCounter()
         self.data_track = OrderedDictWithCounter()
         self.data_background = OrderedDictWithCounter()
         self.data_background_direct = OrderedDictWithCounter()
+        # by_comm 指的就是，只是在通讯过程中出现在这个背景里，而并不实际在背景里出现
+        self.data_background_by_comm = OrderedDictWithCounter()
         self.data_character = OrderedDictWithCounter()
 
     def register(self, file_loader: FileLoader, count_increase=True):
@@ -77,8 +81,10 @@ class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
                     self.data_background[instance_id] = file_loader
                     if not count_increase:
                         self.data_background.counter_adjust(instance_id, -1)
-                else:
+                elif filetype == FILE_BACKGROUND_INFO_DIRECT:
                     self.data_background_direct[instance_id] = file_loader
+                elif filetype == FILE_BACKGROUND_INFO_INDIRECT_COMMS:
+                    self.data_background_by_comm[instance_id] = file_loader
             elif filetype in FILETYPES_CHARACTER:
                 self.data_character[instance_id] = file_loader
                 if not count_increase:
@@ -93,6 +99,9 @@ class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
         d["data_background_direct"] = counter_dict_sorter(
             self.data_background_direct.get_counter_with_data_sorted_by_counter(),
             ["filename"])
+        d["data_background_by_comm"] = counter_dict_sorter(
+            self.data_background_direct.get_counter_with_data_sorted_by_counter(),
+            ["filename"])
         d["data_character"] = counter_dict_sorter(self.data_character.get_counter_with_data_sorted_by_counter(),
                                                   [["name", "path_name"], ["name", "en"]])
         d["data_background"] = counter_dict_sorter(self.data_background.get_counter_with_data_sorted_by_counter(),
@@ -100,12 +109,55 @@ class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
         return d
 
 
+class CharacterInfoProxyComm:
+    """
+    这个类干的东西基本上就是：接管原对象的 `used_by.register` 方法，然后把背景数据的filetype改一下实现特殊注册。
+    """
+
+    class UsedByHandler(BaseUsedBy):
+        def __init__(self, real_obj):
+            self.real_obj = real_obj.used_by
+
+        def register(self, file_loader: FileLoader, count_increase=True):
+            if file_loader.filetype in FILETYPES_BACKGROUND:
+                if file_loader.filetype != FILE_BACKGROUND_INFO_DIRECT:
+                    self.real_obj.register(
+                        ObjectAccessProxier(file_loader, {"filetype": FILE_BACKGROUND_INFO_INDIRECT_COMMS}),
+                        count_increase)
+            else:
+                self.real_obj.register(file_loader, count_increase)
+
+    def __init__(self, real_obj: "NpcInfo" or "StudentInfo"):
+        self.real_obj = real_obj
+        self._used_by_handler = self.UsedByHandler(real_obj)
+
+    @property
+    def used_by(self):
+        return self._used_by_handler
+
+    def __getattr__(self, item):
+        return getattr(self.real_obj, item)
+
+
 class CharacterInfo(FileLoader, InterpageMixin, UsedByRegisterMixin, RelatedToRegisterMixin):
     _instance = {}
 
     @classmethod
     def get_instance(cls, instance_id):
+        def return_instance(instance):
+            if is_comm:
+                return CharacterInfoProxyComm(instance)
+            return instance
+
         instance_id = instance_id.upper()
+        is_comm = False
+
+        # 考虑是不是comm特殊例
+        if instance_id.endswith("(COMM)") or instance_id.endswith("_COMM"):
+            # 清除特殊标记
+            instance_id = instance_id.replace("_COMM", "").replace("(COMM)", "")
+            is_comm = True
+
         try:
             # If it's a student
             temp = super().get_instance(instance_id="STU_" + instance_id)
@@ -123,11 +175,11 @@ class CharacterInfo(FileLoader, InterpageMixin, UsedByRegisterMixin, RelatedToRe
                     # 还没有的话建议直接raise
                     raise e
                 else:
-                    return temp
+                    return return_instance(temp)
             else:
-                return temp
+                return return_instance(temp)
         else:
-            return temp
+            return return_instance(temp)
 
     def _get_instance_offset(self, offset: int):
         keys = list(self._instance.keys())
@@ -426,7 +478,17 @@ class CharacterListManager(BaseDataModelListManager):
             self.character.append(StudentInfo.get_instance(i))
 
     def to_json(self):
-        t = [i.to_json_basic() for i in self.character]
+        t = []
+        for i in self.character:
+            temp = i.to_json_basic()
+
+            if isinstance(i, CharacterInfoProxyComm):
+                temp["is_comm"] = True
+            else:
+                temp["is_comm"] = False
+
+            t.append(temp)
+
         return t
 
     def to_json_basic(self):
