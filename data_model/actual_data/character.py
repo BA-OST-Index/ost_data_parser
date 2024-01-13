@@ -100,7 +100,7 @@ class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
             self.data_background_direct.get_counter_with_data_sorted_by_counter(),
             ["filename"])
         d["data_background_by_comm"] = counter_dict_sorter(
-            self.data_background_direct.get_counter_with_data_sorted_by_counter(),
+            self.data_background_by_comm.get_counter_with_data_sorted_by_counter(),
             ["filename"])
         d["data_character"] = counter_dict_sorter(self.data_character.get_counter_with_data_sorted_by_counter(),
                                                   [["name", "path_name"], ["name", "en"]])

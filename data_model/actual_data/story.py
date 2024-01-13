@@ -158,6 +158,7 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
         t = {
             "uuid": self.uuid,
             "filetype": self.filetype,
+            "namespace": self.namespace,
 
             "name": self.name.to_json_basic(),
             "desc": [i for i in self.desc.to_json_basic()],
@@ -317,6 +318,7 @@ class StoryInfoBond(FileLoader, IParentData, InterpageMixin):
         t = {
             "uuid": self.uuid,
             "filetype": self.filetype,
+            "namespace": self.namespace,
 
             "name": self.name.to_json_basic(),
             "desc": [i for i in self.desc.to_json_basic()],

@@ -81,7 +81,10 @@ class FolderLoader(NamespacePathMixin, IToJson, ParentDataMixin):
 
     @staticmethod
     def sort_by_int(item):
-        return int(item[:-5])
+        try:
+            return str(int(item[:-5])).rjust(3, "0")
+        except ValueError:
+            return item
 
     def process(self):
         from .loader_detect import get_loader_by_filepath
