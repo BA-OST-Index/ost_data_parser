@@ -239,6 +239,11 @@ class CharacterLoader(FolderLoader):
             pass
         return d
 
+    def auto_include(self):
+        temp = super().auto_include()
+        temp.sort(key=self.sort_by_int)
+        return temp
+
 
 class AlbumLoader(GenericFolder):
     def __init__(self, namespace: list, basepath, json_data=None, parent_data=None):
