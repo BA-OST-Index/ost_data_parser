@@ -109,7 +109,7 @@ class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
         return d
 
 
-class CharacterInfoProxyComm:
+class CharacterInfoIndirectProxy:
     """
     这个类干的东西基本上就是：接管原对象的 `used_by.register` 方法，然后把背景数据的filetype改一下实现特殊注册。
     """
@@ -135,8 +135,19 @@ class CharacterInfoProxyComm:
     def used_by(self):
         return self._used_by_handler
 
+    def register(self, file_loader: FileLoader, count_increase=True):
+        self.used_by.register(file_loader, count_increase)
+
     def __getattr__(self, item):
         return getattr(self.real_obj, item)
+
+
+class CharacterInfoProxyComm(CharacterInfoIndirectProxy):
+    pass
+
+
+class CharacterInfoProxyNarrative(CharacterInfoIndirectProxy):
+    pass
 
 
 class CharacterInfo(FileLoader, InterpageMixin, UsedByRegisterMixin, RelatedToRegisterMixin):
@@ -147,16 +158,21 @@ class CharacterInfo(FileLoader, InterpageMixin, UsedByRegisterMixin, RelatedToRe
         def return_instance(instance):
             if is_comm:
                 return CharacterInfoProxyComm(instance)
+            elif is_narrative:
+                return CharacterInfoProxyNarrative(instance)
             return instance
 
         instance_id = instance_id.upper()
-        is_comm = False
+        is_comm, is_narrative = False, False
 
         # 考虑是不是comm特殊例
         if instance_id.endswith("(COMM)") or instance_id.endswith("_COMM"):
             # 清除特殊标记
             instance_id = instance_id.replace("_COMM", "").replace("(COMM)", "")
             is_comm = True
+        elif instance_id.endswith("(NARR)") or instance_id.endswith("_NARR"):
+            instance_id = instance_id.replace("_NARR", "").replace("(NARR)", "")
+            is_narrative = True
 
         try:
             # If it's a student
@@ -484,8 +500,13 @@ class CharacterListManager(BaseDataModelListManager):
 
             if isinstance(i, CharacterInfoProxyComm):
                 temp["is_comm"] = True
+                temp["is_narrative"] = False
+            elif isinstance(i, CharacterInfoProxyNarrative):
+                temp["is_comm"] = False
+                temp["is_narrative"] = True
             else:
                 temp["is_comm"] = False
+                temp["is_narrative"] = False
 
             t.append(temp)
 
