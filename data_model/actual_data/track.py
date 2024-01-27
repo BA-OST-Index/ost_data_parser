@@ -1,4 +1,5 @@
 from itertools import chain
+from collections import OrderedDict
 from data_model.types.url import *
 from data_model.types.metatype.base_type import *
 from data_model.types.metatype.base_model import *
@@ -374,7 +375,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
     duration = Integer("duration")
     filetype = Integer("filetype")
     uuid = UUID("uuid")
-    _instance = {}
+    _instance = OrderedDict()
     _filetype_id_map = {"0": "OST", "1": "short",
                         "2": "animation", "3": "other"}
 
@@ -489,9 +490,28 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
             return None
 
         try:
-            return self._instance[self._instance[curr_index + offset]]
-        except KeyError or IndexError:
+            result = self._instance[keys[curr_index + offset]]
+            if result.filetype != self.filetype:
+                return None
+            return result
+        except (KeyError, IndexError):
             return None
+
+    def get_mixed_interpage_data(self, prev, next):
+        return {
+            "prev": {
+                "name": prev.name.to_json_basic() if prev else "[NO_PREV]",
+                "namespace": prev.namespace if prev else "[NO_PREV]",
+                "instance_id": prev.instance_id if prev else "[NO_PREV]",
+                "no": prev.no if prev else "[NO_PREV]",
+            },
+            "next": {
+                "name": next.name.to_json_basic() if next else "[NO_NEXT]",
+                "namespace": next.namespace if next else "[NO_NEXT]",
+                "instance_id": next.instance_id if next else "[NO_NEXT]",
+                "no": next.no if next else "[NO_NEXT]",
+            }
+        }
 
     def set_stat(self, stat_name, value):
         self.stats.set_stat(stat_name, value)

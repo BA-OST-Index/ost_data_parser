@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from .track import TrackInfo
 from ..types.url import UrlModel
 from ..loader import i18n_translator, FileLoader
@@ -6,7 +7,7 @@ from ..tool.interpage import InterpageMixin
 
 
 class UiInfo(FileLoader, IParentData, InterpageMixin):
-    _instance = {}
+    _instance = OrderedDict()
 
     def __init__(self, **kwargs):
         super().__init__(data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])
