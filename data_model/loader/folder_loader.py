@@ -64,20 +64,17 @@ class GenericFolder(FolderLoader):
 
 
 class TrackFolder(GenericFolder):
+    def auto_include(self):
+        temp = super().auto_include()
+        temp.sort(key=self.sort_by_int)
+        return temp
+
     def to_json(self):
         d = super().to_json()
-        try:
-            d["include"].sort(key=lambda i: i[1]["no"])
-        except KeyError:
-            pass
         return d
 
     def to_json_basic(self):
         d = super().to_json_basic()
-        try:
-            d["include"].sort(key=lambda i: i[1]["no"])
-        except KeyError:
-            pass
         return d
 
 
@@ -163,7 +160,10 @@ class BattleLoader(GenericFolder):
 
 
 class VideoLoader(GenericFolder):
-    pass
+    def auto_include(self):
+        temp = super().auto_include()
+        temp.sort(key=self.sort_by_int)
+        return temp
 
 
 class EventLoader(GenericFolder):

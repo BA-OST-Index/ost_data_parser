@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from .track import TrackInfo
 from data_model.types.metatype.base_type import *
 from data_model.types.metatype.complex import *
@@ -41,7 +42,7 @@ class AlbumTrackListManager(IToJson):
 class AlbumInfo(FileLoader, InterpageMixin):
     release_date = Timestamp("release_date")
     disc_num = Integer('disc_num')
-    _instance = {}
+    _instance = OrderedDict()
 
     def __init__(self, **kwargs):
         super().__init__(data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])

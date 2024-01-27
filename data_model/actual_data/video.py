@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from ..loader import FileLoader, i18n_translator
 from ..types.url import UrlModel
 from ..actual_data.track import TrackListManager, TrackVersionListManager
@@ -32,7 +33,7 @@ class VideoStats(IToJson):
 
 
 class VideoInfo(FileLoader, InterpageMixin):
-    _instance = {}
+    _instance = OrderedDict()
 
     def __init__(self, **kwargs):
         super().__init__(data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])
