@@ -490,7 +490,10 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
             return None
 
         try:
-            return self._instance[keys[curr_index + offset]]
+            result = self._instance[keys[curr_index + offset]]
+            if result.filetype != self.filetype:
+                return None
+            return result
         except (KeyError, IndexError):
             return None
 
