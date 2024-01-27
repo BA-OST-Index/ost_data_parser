@@ -482,11 +482,15 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
         return super().get_instance(instance_id)
 
     def _get_instance_offset(self, offset: int):
-        t = self.instance_id.split("_")
-        no = int(t[1]) + offset
+        keys = list(self._instance.keys())
+        curr_index = keys.index(self.instance_id)
+
+        if curr_index + offset < 0:
+            return None
+
         try:
-            return self._instance["_".join([t[0], str(no)])]
-        except KeyError:
+            return self._instance[self._instance[curr_index + offset]]
+        except KeyError or IndexError:
             return None
 
     def set_stat(self, stat_name, value):
