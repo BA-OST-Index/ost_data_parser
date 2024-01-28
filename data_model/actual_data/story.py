@@ -255,6 +255,22 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
             ref_data = self.data["interpage"]["next"]
             return ReferenceData(*self.process_reference_data(ref_data)).ref_instance
 
+    def get_mixed_interpage_data(self, prev, next):
+        return {
+            "prev": {
+                "name": prev.name.to_json_basic() if prev else "[NO_PREV]",
+                "namespace": prev.namespace if prev else "[NO_PREV]",
+                "is_battle": prev.is_battle if prev else "[NO_PREV]",
+                "pos": prev.pos.to_json_basic() if prev else "[NO_PREV]"
+            },
+            "next": {
+                "name": next.name.to_json_basic() if next else "[NO_NEXT]",
+                "namespace": next.namespace if next else "[NO_NEXT]",
+                "is_battle": next.is_battle if next else "[NO_NEXT]",
+                "pos": next.pos.to_json_basic() if next else "[NO_NEXT]"
+            }
+        }
+
 
 class StoryInfoBond(FileLoader, IParentData, InterpageMixin):
     """Basically a modified class from StoryInfo"""
@@ -308,7 +324,6 @@ class StoryInfoBond(FileLoader, IParentData, InterpageMixin):
         return "_".join(["BOND", *story_pos])
 
     def _get_instance_offset(self, offset: int):
-        # TODO
         return StoryInfo._get_instance_offset(self, offset)
 
     def parent_data_to_json(self):
@@ -352,3 +367,19 @@ class StoryInfoBond(FileLoader, IParentData, InterpageMixin):
     @classmethod
     def get_instance(cls, instance_id):
         return super().get_instance(instance_id)
+
+    def get_mixed_interpage_data(self, prev, next):
+        return {
+            "prev": {
+                "name": prev.name.to_json_basic() if prev else "[NO_PREV]",
+                "namespace": prev.namespace if prev else "[NO_PREV]",
+                "is_memory": prev.is_memory if prev else "[NO_PREV]",
+                "pos": prev.pos.to_json_basic() if prev else "[NO_PREV]"
+            },
+            "next": {
+                "name": next.name.to_json_basic() if next else "[NO_NEXT]",
+                "namespace": next.namespace if next else "[NO_NEXT]",
+                "is_memory": next.is_memory if next else "[NO_NEXT]",
+                "pos": next.pos.to_json_basic() if next else "[NO_NEXT]"
+            }
+        }

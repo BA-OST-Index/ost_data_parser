@@ -95,6 +95,28 @@ class MainBattleInfo(BaseBattleInfo, InterpageMixin):
         except IndexError:
             return None
 
+    def get_mixed_interpage_data(self, prev, next):
+        def get_chapter(obj):
+            try:
+                return obj.chapter
+            except AttributeError:
+                return "[NO_PREV]"
+
+        return {
+            "prev": {
+                "name": prev.name.to_json_basic() if prev else "[NO_PREV]",
+                "namespace": prev.namespace if prev else "[NO_PREV]",
+                "chapter": get_chapter(prev),
+                "no": prev.no if prev else "[NO_PREV]"
+            },
+            "next": {
+                "name": next.name.to_json_basic() if next else "[NO_NEXT]",
+                "namespace": next.namespace if next else "[NO_NEXT]",
+                "chapter": get_chapter(next),
+                "no": next.no if next else "[NO_NEXT]"
+            }
+        }
+
 
 class SchoolExchangeInfo(BaseBattleInfo):
     _instance = {}

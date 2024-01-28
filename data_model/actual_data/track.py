@@ -1,4 +1,5 @@
 from itertools import chain
+from collections import OrderedDict
 from data_model.types.url import *
 from data_model.types.metatype.base_type import *
 from data_model.types.metatype.base_model import *
@@ -374,7 +375,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
     duration = Integer("duration")
     filetype = Integer("filetype")
     uuid = UUID("uuid")
-    _instance = {}
+    _instance = OrderedDict()
     _filetype_id_map = {"0": "OST", "1": "short",
                         "2": "animation", "3": "other"}
 
@@ -482,12 +483,35 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
         return super().get_instance(instance_id)
 
     def _get_instance_offset(self, offset: int):
-        t = self.instance_id.split("_")
-        no = int(t[1]) + offset
-        try:
-            return self._instance["_".join([t[0], str(no)])]
-        except KeyError:
+        keys = list(self._instance.keys())
+        curr_index = keys.index(self.instance_id)
+
+        if curr_index + offset < 0:
             return None
+
+        try:
+            result = self._instance[keys[curr_index + offset]]
+            if result.filetype != self.filetype:
+                return None
+            return result
+        except (KeyError, IndexError):
+            return None
+
+    def get_mixed_interpage_data(self, prev, next):
+        return {
+            "prev": {
+                "name": prev.name.to_json_basic() if prev else "[NO_PREV]",
+                "namespace": prev.namespace if prev else "[NO_PREV]",
+                "instance_id": prev.instance_id if prev else "[NO_PREV]",
+                "no": prev.no if prev else "[NO_PREV]",
+            },
+            "next": {
+                "name": next.name.to_json_basic() if next else "[NO_NEXT]",
+                "namespace": next.namespace if next else "[NO_NEXT]",
+                "instance_id": next.instance_id if next else "[NO_NEXT]",
+                "no": next.no if next else "[NO_NEXT]",
+            }
+        }
 
     def set_stat(self, stat_name, value):
         self.stats.set_stat(stat_name, value)
