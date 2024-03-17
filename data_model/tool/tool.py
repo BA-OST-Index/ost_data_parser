@@ -1,6 +1,7 @@
 import abc
+import json
 import logging
-from collections import OrderedDict
+from collections import OrderedDict, UserDict
 
 
 class SingletonInstanceMixin(abc.ABC):
@@ -136,6 +137,20 @@ class ObjectAccessProxier:
             return self.custom_get[attr]
 
         return getattr(self._object, attr)
+
+
+class KeyToMultiValueDict(UserDict):
+    def __init__(self):
+        super().__init__()
+
+    def __setitem__(self, key, value):
+        if key not in self.keys():
+            UserDict.__setitem__(self, key, [])
+
+        self[key].append(value)
+
+    def to_json(self):
+        return self.data
 
 
 def seconds_to_minutes(seconds: int):

@@ -113,7 +113,7 @@ class BackgroundInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
         }
 
     @classmethod
-    def get_instance(cls, instance_id):
+    def get_instance(cls, instance_id) -> "BackgroundInfo":
         return super().get_instance(instance_id)
 
     def _get_instance_offset(self, offset: int):

@@ -64,12 +64,14 @@ class StoryPosEvent(StoryPos):
 class StoryPosBond(StoryPos):
     student = String('student')
     no = Integer('no')
-    _components = ["student", "no"]
+    favor_rank = Integer('favor_rank')
+    _components = ["student", "no", "favor_rank"]
 
     def load(self, data):
         super().load(data)
         self.student = data["student"]
         self.no = data["segment"]
+        self.favor_rank = data["favor_rank"]
 
 
 def storyPosAuto(data: dict, key_name: str = "pos"):

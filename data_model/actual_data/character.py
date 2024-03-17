@@ -154,7 +154,7 @@ class CharacterInfo(FileLoader, InterpageMixin, UsedByRegisterMixin, RelatedToRe
     _instance = {}
 
     @classmethod
-    def get_instance(cls, instance_id):
+    def get_instance(cls, instance_id) -> "CharacterInfo":
         def return_instance(instance):
             if is_comm:
                 return CharacterInfoProxyComm(instance)
@@ -315,6 +315,7 @@ class StudentInfo(CharacterInfo):
         self._armor_type = schale_db_manager.query_constant("students", self.char_name, "ArmorType")
 
         self._bond_track = None
+        self._bond_rank = -1
 
         self.used_by = CharacterUsedBy()
         if "related_to" not in kwargs["data"].keys():
@@ -333,6 +334,17 @@ class StudentInfo(CharacterInfo):
 
         self._bond_track = value
         value.bond_chars.append(self)
+
+    @property
+    def bond_rank(self):
+        return self._bond_rank
+
+    @bond_rank.setter
+    def bond_rank(self, value):
+        if self._bond_rank != -1:
+            raise RuntimeError("Cannot set bond track after the bond track has been set!")
+
+        self._bond_rank = value
 
     @staticmethod
     def _get_instance_id(data: dict):
@@ -392,7 +404,8 @@ class StudentInfo(CharacterInfo):
             },
             "related_to": self.related_to.to_json_basic(),
 
-            "bond_track": self.bond_track.to_json_basic() if self.bond_track else None
+            "bond_track": self.bond_track.to_json_basic() if self.bond_track else None,
+            "bond_rank": self.bond_rank
         }
 
     def to_json_basic(self):
@@ -437,7 +450,8 @@ class StudentInfo(CharacterInfo):
                     "lang": self.armor_type.to_json()
                 }
             },
-            "bond_track": self.bond_track.to_json_basic() if self.bond_track else None
+            "bond_track": self.bond_track.to_json_basic() if self.bond_track else None,
+            "bond_rank": self.bond_rank
         }
 
     @classmethod
