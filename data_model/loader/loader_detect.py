@@ -18,7 +18,7 @@ from ..actual_data.track_album import AlbumInfo
 from .folder_loader import TrackFolder, TagFolder, CharacterLoader, BackgroundLoader, StoryLoader, UiLoader, \
     BattleLoader, VideoLoader, EventLoader, AlbumLoader
 from ..actual_data.tag import TagInfo
-from ..actual_data.story import StoryInfoBond, StoryInfo
+from ..actual_data.story import storyinfo_dispatcher
 from ..actual_data.background import BackgroundInfo
 from ..actual_data.character import NpcInfo
 from ..actual_data.ui import UiInfo, UiInfoEvent
@@ -61,7 +61,7 @@ class EventLoaderDetect(BaseLoaderDetect):
         elif entry.filetype == FILE_BATTLE_EVENT:
             yield EventBattleInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
         elif entry.filetype == FILE_STORY_EVENT:
-            yield StoryInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+            yield storyinfo_dispatcher(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
         else:
             yield from EventLoaderDetect.next_detect.detect(entry)
 
@@ -131,12 +131,12 @@ class StoryLoaderDetect(BaseLoaderDetect):
         if entry.filetype in FILETYPES_STORY:
             if entry.filetype == FILE_STORY_BOND:
                 # just in case if something goes wrong
-                bond = StoryInfoBond(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+                bond = storyinfo_dispatcher(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
                 bond.after_instantiate()
                 yield bond
 
             # Normal
-            yield StoryInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+            yield storyinfo_dispatcher(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
         elif entry.filetype in FILETYPES_STORY_DIR:
             yield StoryLoader(namespace=entry.namespace, json_data=entry.data,
                               basepath=entry.filepath, parent_data=entry.parent_data)
@@ -168,7 +168,7 @@ class CharacterLoaderDetect(BaseLoaderDetect):
             yield CharacterLoader(namespace=entry.namespace, json_data=entry.data,
                                   basepath=entry.filepath, parent_data=entry.parent_data)
         elif entry.filetype == FILE_STORY_BOND:
-            bond = StoryInfoBond(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+            bond = storyinfo_dispatcher(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
             bond.after_instantiate()
             yield bond
         elif entry.filetype == FILE_CHARACTER_INFO:

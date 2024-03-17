@@ -479,7 +479,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
         return t
 
     @classmethod
-    def get_instance(cls, instance_id):
+    def get_instance(cls, instance_id) -> "TrackInfo":
         return super().get_instance(instance_id)
 
     def _get_instance_offset(self, offset: int):

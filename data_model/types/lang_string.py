@@ -3,6 +3,9 @@ from .metatype.base_model import BaseDataModel, BaseDataModelList
 
 __all__ = ["LangStringModel", "LangStringModelList", "ZhLangStringModel"]
 
+EXPORT_FOR_LANGSTRINGMODEL = ["en", "jp", "zh_cn"]
+EXPORT_FOR_ZHLANGMODEL = ["en", "jp", "zh_cn_jp", "zh_cn_tw", "zh_cn_cn"]
+
 
 class LangStringModel(BaseDataModel):
     """如 name description 此类需要多语言支持的东西"""
@@ -12,7 +15,7 @@ class LangStringModel(BaseDataModel):
     ko = String("ko")
     zh_cn = String("zh_cn")
     zh_tw = String("zh_tw")
-    _components = ["en", "jp", "thai", "ko", "zh_cn", "zh_tw"]
+    _components = EXPORT_FOR_LANGSTRINGMODEL
 
     def __init__(self, key_name=None):
         super().__init__(key_name)
@@ -51,7 +54,7 @@ class ZhLangStringModel(LangStringModel):
     zh_cn_jp = String("zh_cn_jp")
     zh_cn_tw = String("zh_cn_tw")
     zh_cn_cn = String("zh_cn_cn")
-    _components = ["en", "jp", "thai", "ko", "zh_tw", "zh_cn_jp", "zh_cn_tw", "zh_cn_cn"]
+    _components = EXPORT_FOR_ZHLANGMODEL
 
     def load(self, data: dict):
         super().load(data)

@@ -1,13 +1,15 @@
 from data_model.types.metatype.base_type import *
 from data_model.types.metatype.complex import *
+from data_model.actual_data.track import TrackInfo
 from data_model.actual_data._story.story_pos import *
 from data_model.types.url import UrlModel
 from data_model.loader import i18n_translator
 from data_model.types.lang_string import LangStringModelList
 from data_model.loader import FileLoader
 from data_model.constant.file_type import FILE_STORY_MAIN, FILE_STORY_SIDE, FILE_STORY_SHORT, FILE_STORY_EVENT, \
-    FILE_STORY_OTHER
+    FILE_STORY_OTHER, FILE_STORY_BOND
 from ._story.story_part import StoryInfoPartListManager
+from ._story.story_part_auto import StoryPartAutoData
 from ._story.story_source_all import StoryInfoSource
 from ..tool.parent_data import IParentData
 from ..tool.interpage import InterpageMixin
@@ -158,6 +160,7 @@ class StoryInfo(FileLoader, IParentData, InterpageMixin):
         t = {
             "uuid": self.uuid,
             "filetype": self.filetype,
+            "filetype_sub": 0,
             "namespace": self.namespace,
 
             "name": self.name.to_json_basic(),
@@ -311,6 +314,7 @@ class StoryInfoBond(FileLoader, IParentData, InterpageMixin):
         # 如果当前为回忆大厅剧情，则绑定学生的bond_track
         if self.is_memory:
             self.stu.bond_track = self.part.bgm_special[0]
+            self.stu.bond_rank = self.pos.favor_rank
 
         self.extra_register()
 
@@ -333,6 +337,7 @@ class StoryInfoBond(FileLoader, IParentData, InterpageMixin):
         t = {
             "uuid": self.uuid,
             "filetype": self.filetype,
+            "filetype_sub": 0,
             "namespace": self.namespace,
 
             "name": self.name.to_json_basic(),
@@ -383,3 +388,92 @@ class StoryInfoBond(FileLoader, IParentData, InterpageMixin):
                 "pos": next.pos.to_json_basic() if next else "[NO_NEXT]"
             }
         }
+
+
+class StoryInfoAutoMixin:
+    @staticmethod
+    def to_json(data):
+        temp = data
+        temp["filetype_sub"] = 1
+        return temp
+
+    @staticmethod
+    def to_json_basic(data):
+        temp = data
+        temp["filetype_sub"] = 1
+        return temp
+
+
+class StoryInfoAuto(StoryInfo, StoryInfoAutoMixin):
+    def __init__(self, **kwargs):
+        super().__init__(data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])
+        data = kwargs["data"]
+        self.is_battle = data["is_battle"]
+
+        self.name = i18n_translator[data["name"]]
+        self.pos = storyPosAuto(data["pos"])
+        self.image = UrlModel()
+        self.source = StoryInfoSource(data.get("source", {}))
+        self.image.load(self.data["image"])
+
+        self.desc = LangStringModelList('desc')
+        if isinstance(data["desc"], str):
+            self.desc.append(i18n_translator[data["desc"]])
+        else:
+            for i in data["desc"]:
+                self.desc.append(i18n_translator[i])
+
+        self.extra_register()
+
+    def extra_register(self):
+        self.part = StoryPartAutoData(self.data["data"], self)
+
+        # 手动加载，防止bug
+        self.part.load()
+
+    def to_json(self):
+        return StoryInfoAutoMixin.to_json(StoryInfo.to_json(self))
+
+    def to_json_basic(self):
+        return StoryInfoAutoMixin.to_json_basic(StoryInfo.to_json_basic(self))
+
+
+class StoryInfoBondAuto(StoryInfoBond, StoryInfoAutoMixin):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def extra_register(self):
+        self.part = StoryPartAutoData(self.data["data"], self)
+        self.part.load()
+
+    def to_json(self):
+        return StoryInfoAutoMixin.to_json(StoryInfoBond.to_json(self))
+
+    def to_json_basic(self):
+        return StoryInfoAutoMixin.to_json_basic(StoryInfoBond.to_json_basic(self))
+
+    def after_instantiate(self):
+        self.extra_register()
+
+        # 如果当前为回忆大厅剧情，则绑定学生的bond_track
+        if self.data["data"]["special"]["flag"]:
+            self.stu.bond_track = TrackInfo.get_instance(self.data["data"]["special"]["track"])
+            self.stu.bond_rank = self.pos.favor_rank
+
+
+def storyinfo_dispatcher(**kwargs):
+    try:
+        filetype_sub = kwargs["data"]["filetype_sub"]
+    except KeyError:
+        filetype_sub = 0
+
+    if kwargs["data"]["filetype"] == FILE_STORY_BOND:
+        if filetype_sub == 0:
+            return StoryInfoBond(**kwargs)
+        else:
+            return StoryInfoBondAuto(**kwargs)
+    else:
+        if filetype_sub == 0:
+            return StoryInfo(**kwargs)
+        else:
+            return StoryInfoAuto(**kwargs)
