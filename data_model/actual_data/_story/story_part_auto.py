@@ -111,6 +111,16 @@ class StoryPartAutoData(IToJson):
 
                 self._bg_to_char[bg_id] = char_id
 
+        # char to char
+        for (char_id, data) in self.data["char_to_char"].items():
+            char1 = self.data_all.character[char_id]
+
+            for char2_id in data:
+                char2 = self.data_all.character[char2_id]
+
+                char1.register(char2)
+                char2.register(char1)
+
     def to_json(self):
         return {
             "all": self.data_all.to_json(),
@@ -120,6 +130,7 @@ class StoryPartAutoData(IToJson):
             "bg_to_track": self._bg_to_track.to_json(),
             "char_to_track": self._char_to_track.to_json(),
             "char_to_bg": self.data["char_to_bg"],
+            "char_to_char": self.data["char_to_char"],
             "special": {
                 "flag": self.data_special["flag"],
                 "track": None if self.data_special["track"] is None else self.data_special["track"].to_json_basic()

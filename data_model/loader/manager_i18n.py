@@ -58,7 +58,9 @@ class TranslationManager:
         # 降级到 LangStringModel 进行处置
         if temp["zh_cn_cn"] == temp["zh_cn_jp"] == temp["zh_cn_tw"]:
             # 如果三者全部都一样，那不就是单语言？
-            temp["zh_cn"] = temp["zh_cn_cn"]
+            if temp["zh_cn_cn"] != "":
+
+                temp["zh_cn"] = temp["zh_cn_cn"]
             m = LangStringModel()
             m.load(temp)
         else:
