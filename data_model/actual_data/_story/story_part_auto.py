@@ -64,7 +64,11 @@ class StoryPartAutoData(IToJson):
         self.data_all.load()
 
         # pre-process
-        del self.data["track_to_bg"]["OST_0"]
+        try:
+            del self.data["track_to_bg"]["OST_0"]
+        except KeyError:
+            # it's okay if it doesn't exist
+            pass
 
         # track to bg
         for (track_id, bgs) in self.data["track_to_bg"].items():
