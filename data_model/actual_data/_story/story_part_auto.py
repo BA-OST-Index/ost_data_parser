@@ -1,3 +1,4 @@
+import logging
 from collections import OrderedDict
 
 from data_model.actual_data.track import TrackInfo
@@ -19,9 +20,12 @@ class StoryPartAutoDataAll(IToJson):
     def load(self):
         # bg
         for i in self.data["background"]:
-            temp = BackgroundInfo.get_instance(i)
-            temp.register(self.story)
-            self.background[i] = temp
+            try:
+                temp = BackgroundInfo.get_instance(i)
+                temp.register(self.story)
+                self.background[i] = temp
+            except KeyError:
+                logging.warning("No track info about: " + repr(i))
         # track
         for i in self.data["track"]:
             temp = TrackInfo.get_instance(i)
@@ -29,9 +33,12 @@ class StoryPartAutoDataAll(IToJson):
             self.track[i] = temp
         # character
         for i in self.data["character"]:
-            temp = CharacterInfo.get_instance(i)
-            temp.register(self.story)
-            self.character[i] = temp
+            try:
+                temp = CharacterInfo.get_instance(i)
+                temp.register(self.story)
+                self.character[i] = temp
+            except KeyError:
+                logging.warning("No character info about: " + repr(i))
 
     def to_json(self):
         return {
@@ -74,13 +81,15 @@ class StoryPartAutoData(IToJson):
         for (track_id, bgs) in self.data["track_to_bg"].items():
             if track_id == "OST_0":
                 continue
-
             track = self.data_all.track[track_id]
             for bg_id in bgs:
                 if bg_id in ["BG_Red.jpg", "BG_Black.jpg", "BG_White.jpg"]:
                     continue
 
-                bg = self.data_all.background[bg_id]
+                try:
+                    bg = self.data_all.background[bg_id]
+                except KeyError:
+                    continue
 
                 track.register(bg)
                 bg.register(track)
@@ -94,21 +103,31 @@ class StoryPartAutoData(IToJson):
 
             track = self.data_all.track[track_id]
             for char_id in chars:
-                char = self.data_all.character[char_id]
+                try:
+                    char = self.data_all.character[char_id]
+                except KeyError:
+                    continue
 
-                track.register(char)
-                char.register(track)
+                    track.register(char)
+                    char.register(track)
 
-                self._char_to_track[char_id] = track_id
+                    self._char_to_track[char_id] = track_id
 
         # char to bg
         for (char_id, bgs) in self.data["char_to_bg"].items():
-            char = self.data_all.character[char_id]
+            try:
+                char = self.data_all.character[char_id]
+            except KeyError:
+                continue
+
             for bg_id in bgs:
                 if bg_id in ["BG_Red.jpg", "BG_Black.jpg", "BG_White.jpg"]:
                     continue
 
-                bg = self.data_all.background[bg_id]
+                try:
+                    bg = self.data_all.background[bg_id]
+                except KeyError:
+                    continue
 
                 char.register(bg)
                 bg.register(char)
@@ -117,10 +136,16 @@ class StoryPartAutoData(IToJson):
 
         # char to char
         for (char_id, data) in self.data["char_to_char"].items():
-            char1 = self.data_all.character[char_id]
+            try:
+                char1 = self.data_all.character[char_id]
+            except KeyError:
+                continue
 
             for char2_id in data:
-                char2 = self.data_all.character[char2_id]
+                try:
+                    char2 = self.data_all.character[char2_id]
+                except KeyError:
+                    continue
 
                 char1.register(char2)
                 char2.register(char1)

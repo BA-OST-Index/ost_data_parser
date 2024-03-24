@@ -406,7 +406,7 @@ class StoryInfoAutoMixin:
 
 class StoryInfoAuto(StoryInfo, StoryInfoAutoMixin):
     def __init__(self, **kwargs):
-        super().__init__(data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])
+        FileLoader.__init__(self, data=kwargs["data"], namespace=kwargs["namespace"], parent_data=kwargs["parent_data"])
         data = kwargs["data"]
         self.is_battle = data["is_battle"]
 
