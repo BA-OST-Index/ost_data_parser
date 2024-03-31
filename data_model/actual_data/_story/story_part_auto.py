@@ -25,7 +25,7 @@ class StoryPartAutoDataAll(IToJson):
                 temp.register(self.story)
                 self.background[i] = temp
             except KeyError:
-                logging.warning("No track info about: " + repr(i))
+                logging.warning("No bg info about: " + repr(i))
         # track
         for i in self.data["track"]:
             temp = TrackInfo.get_instance(i)
@@ -61,6 +61,9 @@ class StoryPartAutoData(IToJson):
         self._char_to_track = KeyToMultiValueDict()
         self._bg_to_char = KeyToMultiValueDict()
 
+        self._track_to_bg = KeyToMultiValueDict()
+        self._char_to_bg = KeyToMultiValueDict()
+
         self.data_special = {
             "flag": self.data["special"]["flag"],
             "track": None if self.data["special"]["track"] == "OST_0" else TrackInfo.get_instance(
@@ -95,6 +98,7 @@ class StoryPartAutoData(IToJson):
                 bg.register(track)
 
                 self._bg_to_track[bg_id] = track_id
+                self._track_to_bg[track_id] = bg.uuid
 
         # track to char
         for (track_id, chars) in self.data["track_to_char"].items():
@@ -108,10 +112,10 @@ class StoryPartAutoData(IToJson):
                 except KeyError:
                     continue
 
-                    track.register(char)
-                    char.register(track)
+                track.register(char)
+                char.register(track)
 
-                    self._char_to_track[char_id] = track_id
+                self._char_to_track[char_id] = track_id
 
         # char to bg
         for (char_id, bgs) in self.data["char_to_bg"].items():
@@ -133,6 +137,7 @@ class StoryPartAutoData(IToJson):
                 bg.register(char)
 
                 self._bg_to_char[bg_id] = char_id
+                self._char_to_bg[char_id] = bg.uuid
 
         # char to char
         for (char_id, data) in self.data["char_to_char"].items():
@@ -153,12 +158,24 @@ class StoryPartAutoData(IToJson):
     def to_json(self):
         return {
             "all": self.data_all.to_json(),
-            "track_to_bg": self.data["track_to_bg"],
+
+            # for normal
+            "_track_to_bg": self.data["track_to_bg"],
+            # for indexing
+            "track_to_bg": self._track_to_bg.to_json(),
+
             "track_to_char": self.data["track_to_char"],
+
             "bg_to_char": self._bg_to_char.to_json(),
             "bg_to_track": self._bg_to_track.to_json(),
+
             "char_to_track": self._char_to_track.to_json(),
-            "char_to_bg": self.data["char_to_bg"],
+
+            # for normal
+            "_char_to_bg": self.data["char_to_bg"],
+            # for indexing
+            "char_to_bg": self._char_to_bg.to_json(),
+
             "char_to_char": self.data["char_to_char"],
             "special": {
                 "flag": self.data_special["flag"],
