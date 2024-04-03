@@ -317,6 +317,8 @@ class StudentInfo(CharacterInfo):
         self._bond_track = None
         self._bond_rank = -1
 
+        self.profile_intro = i18n_translator.query(f"[CHARACTER_{self._id}_GET_DIALOG_TEXT]")
+
         self.used_by = CharacterUsedBy()
         if "related_to" not in kwargs["data"].keys():
             self.related_to = CharacterRelatedTo(self, CharacterRelatedTo.BLANK_DATA)
@@ -372,7 +374,8 @@ class StudentInfo(CharacterInfo):
             },
             "profile": {
                 "profile": self.profile.to_json(),
-                "gacha": self.profile_gacha.to_json()
+                "gacha": self.profile_gacha.to_json(),
+                "intro": self.profile_intro.to_json()
             },
             "school": {
                 "short": self.school.to_json(),
