@@ -140,6 +140,7 @@ class StoryPartAutoData(IToJson):
                 self._char_to_bg[char_id] = bg.uuid
 
         # char to char
+        _char_to_char = []
         for (char_id, data) in self.data["char_to_char"].items():
             try:
                 char1 = self.data_all.character[char_id]
@@ -151,6 +152,14 @@ class StoryPartAutoData(IToJson):
                     char2 = self.data_all.character[char2_id]
                 except KeyError:
                     continue
+
+                # 唯一识别ID，防止二次注册
+                _ctc_id1 = f"{char_id}_{char2_id}"
+                _ctc_id2 = f"{char2_id}_{char_id}"
+                if _ctc_id1 in _char_to_char or _ctc_id2 in _char_to_char:
+                    continue
+                _char_to_char.append(_ctc_id1)
+                _char_to_char.append(_ctc_id2)
 
                 char1.register(char2)
                 char2.register(char1)
