@@ -3,10 +3,10 @@ name: Push
 on:
   push:
     branches:
-      - 'main'
+      - 'main_v2'
   workflow_dispatch:
   repository_dispatch:
-    types: [ost-data-update-event]
+    types: [ost-data-push-direct]
 
 jobs:
   build:
@@ -24,16 +24,11 @@ jobs:
     - name: Update submodules
       run: |
         git submodule update --remote
-    - name: Run main.py
-      run: python main.py
-    - name: Push changes
-      run: |
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git config --global user.name "github-actions[bot]"
-        cd data_export
-        git add .
-        git commit -m "Update: ${{ github.event.head_commit.message }}"
-        git config -l | grep 'http\..*\.extraheader' | cut -d= -f1 | xargs -L1 git config --unset-all
-        git push https://github-actions[bot]:$REPO_KEY@github.com/BA-OST-Index/ost_data_export.git HEAD:main
-      env:
-        REPO_KEY: ${{secrets.ACTION_SCRIPT}}
+    - name: Run main_quick_test.py
+      run: python main_quick_test.py
+    - name: Generator Dispatch
+      uses: peter-evans/repository-dispatch@v1
+      with:
+        token: ${{ secrets.ACTION_SCRIPT }}
+        event-type: ost-data-parser-push-direct
+        repository: BA-OST-Index/ost_data_site_generator
