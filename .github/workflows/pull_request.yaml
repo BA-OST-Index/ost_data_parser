@@ -17,10 +17,9 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: '3.x'
-    - name: Update submodules
-      run: |
-        git submodule update --remote
 
     # Run main script to test if it can work
-    - name: Run main.py
-      run: python main.py
+    - name: Run testing script
+      run: |
+        mkdir -p data_export
+        python main_quick_test.py

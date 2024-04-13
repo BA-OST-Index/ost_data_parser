@@ -6,6 +6,7 @@ FILE_TRACK_SHORT = 2
 FILE_TRACK_ANIMATION = 3
 FILE_TRACK_OTHER = 4
 FILE_ALBUM = 5
+FILE_COMPOSER = 6
 
 FILE_STORY_MAIN = 11
 FILE_STORY_SIDE = 12
@@ -46,6 +47,7 @@ FILE_DIR_ROOT = -10  # /data/all.json
 FILE_DIR_TRACK_ALL = -11  # /data/track
 FILE_DIR_TRACK_CATEGORY = -12  # /data/track/xxx
 FILE_DIR_ALBUM_ALL = -13  # /data/album
+FILE_DIR_COMPOSER_ALL = -14  # /data/composer
 
 FILE_DIR_MAIN_ALL = -21  # /data/main/all.json
 FILE_DIR_MAIN_STORY_ALL = -22  # /data/main/story/all.json

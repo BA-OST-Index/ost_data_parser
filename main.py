@@ -10,6 +10,7 @@ from data_model.tool.tool import PostExecutionManager
 
 start_time = time.time()
 TAGS = get_loader_by_filepath([], r"data/tag", None)
+COMPOSERS = get_loader_by_filepath([], r"data/composer", None)
 TRACKS = get_loader_by_filepath([], r"data/track", None)
 BACKGROUNDS = get_loader_by_filepath([], r"data/background", None)
 CHARACTERS = get_loader_by_filepath([], r"data/character", None)
@@ -79,6 +80,12 @@ start_time = time.time()
 print("Exporting tag")
 write_loader2(TAGS)
 for i in TAGS.including:
+    write_loader(i)
+
+# export composers
+print("Exporting composer")
+write_loader2(COMPOSERS)
+for i in COMPOSERS.including:
     write_loader(i)
 
 # export tracks
