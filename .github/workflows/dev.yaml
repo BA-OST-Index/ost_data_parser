@@ -24,4 +24,6 @@ jobs:
 
     # Run main script to test if it can work
     - name: Run testing script
-      run: python main_quick_test.py
+      run: |
+        mkdir -p data_export
+        python main_quick_test.py

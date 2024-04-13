@@ -25,7 +25,9 @@ jobs:
       run: |
         git submodule update --remote
     - name: Run main_quick_test.py
-      run: python main_quick_test.py
+      run: |
+        mkdir -p data_export
+        python main_quick_test.py
     - name: Generator Dispatch
       uses: peter-evans/repository-dispatch@v1
       with:
