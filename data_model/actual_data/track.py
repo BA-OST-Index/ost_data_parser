@@ -1,22 +1,29 @@
 from itertools import chain
 from collections import OrderedDict
+
 from data_model.types.url import *
 from data_model.types.metatype.base_type import *
 from data_model.types.metatype.base_model import *
 from data_model.types.metatype.complex import *
 from data_model.types.lang_string import *
+
 from data_model.loader import i18n_translator, FileLoader
 from data_model.loader.manager_constant import constant_manager
+
 from data_model.actual_data.used_by import BaseUsedBy, UsedByRegisterMixin, OrderedDictWithCounter, UsedByToJsonMixin
 from data_model.actual_data.related_to import BaseRelatedTo, RelatedToJsonMixin, RelatedToRegisterMixin
 from data_model.actual_data._track.track_version import *
+from data_model.actual_data.tag import TagListManager
+from data_model.actual_data.composer import ComposerInfo
+
 from data_model.constant.file_type import FILETYPES_STORY, FILETYPES_BATTLE, FILETYPES_BACKGROUND, \
     FILE_VIDEO_INFO, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT, FILE_UI_EVENT, FILE_UI_CHILD, \
     FILETYPES_CHARACTER, FILE_STUDENT_INFO, \
     FILE_STORY_BOND, FLAG_STORY_BATTLE
-from data_model.actual_data.tag import TagListManager
+
 from data_model.tool.tool import seconds_to_minutes
 from data_model.tool.interpage import InterpageMixin
+
 from ..tool.tool import counter_dict_sorter, PostExecutionManager
 
 __all__ = ["TrackInfo", "TrackListManager"]
@@ -395,7 +402,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
         self.desc = i18n_translator[data["desc"]]
 
         # Other stuff
-        self.composer = Composer().load(data["composer"])
+        self.composer = ComposerInfo.get_instance(str(data["composer"]["composer_id"]))
         self.composer.register(self)
         self.tags = TrackTags('tags', self)
         self.version = TrackVersionListManager('version')

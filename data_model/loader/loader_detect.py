@@ -2,6 +2,7 @@ import abc
 import json
 import os.path
 from ..constant.file_type import FILETYPES_TRACK, FILETYPES_TRACK_DIR, FILE_ALBUM, FILE_DIR_ALBUM_ALL, \
+    FILE_COMPOSER, FILE_DIR_COMPOSER_ALL, \
     FILE_TAG_INFO, FILE_DIR_TAG_ALL, \
     FILE_DIR_CHARACTER_ALL, FILE_DIR_CHARACTER_CATEGORY, FILE_DIR_STUDENT_SINGLE, FILE_DIR_STUDENT_BOND, \
     FILE_STORY_BOND, FILETYPES_STORY, FILETYPES_STORY_DIR, FILE_CHARACTER_INFO, \
@@ -15,8 +16,9 @@ from ..constant.file_type import FILETYPES_TRACK, FILETYPES_TRACK_DIR, FILE_ALBU
     FILE_REFERENCE_DATA
 from ..actual_data.track import TrackInfo
 from ..actual_data.track_album import AlbumInfo
+from ..actual_data.composer import ComposerInfo
 from .folder_loader import TrackFolder, TagFolder, CharacterLoader, BackgroundLoader, StoryLoader, UiLoader, \
-    BattleLoader, VideoLoader, EventLoader, AlbumLoader
+    BattleLoader, VideoLoader, EventLoader, AlbumLoader, ComposerLoader
 from ..actual_data.tag import TagInfo
 from ..actual_data.story import storyinfo_dispatcher
 from ..actual_data.background import BackgroundInfo
@@ -206,6 +208,11 @@ class TrackLoaderDetect(BaseLoaderDetect):
         elif entry.filetype == FILE_DIR_ALBUM_ALL:
             yield AlbumLoader(namespace=entry.namespace, json_data=entry.data,
                               basepath=entry.filepath, parent_data=entry.parent_data)
+        elif entry.filetype == FILE_COMPOSER:
+            yield ComposerInfo(data=entry.data, namespace=entry.namespace, parent_data=entry.parent_data)
+        elif entry.filetype == FILE_DIR_COMPOSER_ALL:
+            yield ComposerLoader(namespace=entry.namespace, json_data=entry.data,
+                                 basepath=entry.filepath, parent_data=entry.parent_data)
         else:
             yield from TrackLoaderDetect.next_detect.detect(entry)
 
