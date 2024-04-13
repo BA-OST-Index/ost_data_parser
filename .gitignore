@@ -1,5 +1,6 @@
 .idea/
 test*.py
+/data_export/
 
 # -----------------------------------------
 # From https://github.com/github/gitignore/blob/main/Python.gitignore
@@ -157,4 +158,3 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-/data_export/
