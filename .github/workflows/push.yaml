@@ -20,7 +20,6 @@ jobs:
         python-version: '3.x'
     - name: Run main_quick_test.py
       run: |
-        git clone https://github.com/BA-OST-Index/ost_data.git data
         mkdir -p data_export
         python main_quick_test.py
     - name: Generator Dispatch

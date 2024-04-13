@@ -21,6 +21,5 @@ jobs:
     # Run main script to test if it can work
     - name: Run testing script
       run: |
-        git clone https://github.com/BA-OST-Index/ost_data.git data
         mkdir -p data_export
         python main_quick_test.py
