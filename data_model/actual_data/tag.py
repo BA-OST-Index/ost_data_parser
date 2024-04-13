@@ -30,6 +30,12 @@ class TagUsedBy(BaseUsedBy, UsedByToJsonMixin):
         else:
             raise ValueError
 
+    def to_json(self, no_used_by: bool = True):
+        return {
+            "data_track": [i.to_json_basic() for i in self.data_track.values()],
+            "data_background": [i.to_json_basic() for i in self.data_background.values()]
+        }
+
 
 class TagInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
     _color_to_css = {"green": "success", "blue": "primary",
