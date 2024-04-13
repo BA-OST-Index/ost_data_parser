@@ -14,18 +14,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-      with:
-        submodules: 'recursive'
-        fetch-depth: 0
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
         python-version: '3.x'
-    - name: Update submodules
-      run: |
-        git submodule update --remote
     - name: Run main_quick_test.py
       run: |
+        git clone https://github.com/BA-OST-Index/ost_data.git data
         mkdir -p data_export
         python main_quick_test.py
     - name: Generator Dispatch
