@@ -3,10 +3,10 @@ name: Push
 on:
   push:
     branches:
-      - 'main_v2'
+      - 'main'
   workflow_dispatch:
   repository_dispatch:
-    types: [ost-data-push-direct]
+    types: [ost-data-update-event]
 
 jobs:
   build:
@@ -14,14 +14,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
+        fetch-depth: 0
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
         python-version: '3.x'
-    - name: Run main_quick_test.py
+    - name: Run main.py
       run: |
         mkdir -p data_export
-        python main_quick_test.py
+        python main.py
     - name: Generator Dispatch
       uses: peter-evans/repository-dispatch@v1
       with:
