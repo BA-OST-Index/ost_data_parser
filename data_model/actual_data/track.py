@@ -322,56 +322,6 @@ class Contact(BaseDataModel):
         return self.to_json()
 
 
-class Composer(BaseDataModel, UsedByRegisterMixin):
-    """
-    Defines a `composer` dict.
-
-    Note: This class implements irregular Singleton behaviour, in which when
-        you're loading the data, it might return an existing instance if
-        there's a match in either the `nickname` or `composer_id`.
-    """
-    realname = String("realname")
-    nickname = String("nickname")
-    _components = ["composer_id", "realname", "nickname", "contact"]
-    _instance = {}
-
-    def __init__(self, key_name="composer"):
-        super().__init__(key_name)
-        self.contact = Contact()
-        self.used_by = ComposerUsedBy()
-
-    def load(self, value: dict):
-        self.composer_id = str(value.get("composer_id", ""))
-        if self.composer_id in self._instance.keys():
-            return self._instance[self.composer_id]
-
-        # If none is found, then it's the first time to create
-        # Check if the composer is auto-indexed
-        if value.get("composer_id", "") != "":
-            value = constant_manager.query("composer", value["composer_id"])
-        super().load(value)
-
-        self.realname = value["realname"]
-        self.nickname = value["nickname"]
-        self.contact.load(value["contact"])
-
-        self._instance[self.composer_id] = self
-
-        return self
-
-    def to_json(self):
-        return {"composer_id": self.composer_id,
-                "realname": self.realname,
-                "nickname": self.nickname,
-                "contact": self.contact.to_json_basic(),
-                "used_by": self.used_by.to_json_basic()}
-
-    def to_json_basic(self):
-        return {"composer_id": self.composer_id,
-                "nickname": self.nickname,
-                "contact": self.contact.to_json_basic()}
-
-
 # -------------------------------------------------------
 
 class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegisterMixin):

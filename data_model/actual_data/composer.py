@@ -1,5 +1,7 @@
+from collections import OrderedDict
+
 from ..loader import FileLoader
-from .used_by import BaseUsedBy, UsedByRegisterMixin, OrderedDictWithCounter, UsedByToJsonMixin
+from .used_by import BaseUsedBy, UsedByRegisterMixin, UsedByToJsonMixin
 from ..constant.file_type import FILETYPES_TRACK
 from ..tool.interpage import InterpageMixin
 from ..types.url import UrlModel
@@ -8,10 +10,9 @@ from ..tool.tool import ObjectAccessProxier
 
 class ComposerUsedBy(BaseUsedBy, UsedByToJsonMixin):
     SUPPORTED_FILETYPE = [*FILETYPES_TRACK]
-    _components = ["data_track"]
 
     def __init__(self):
-        self.data_track = OrderedDictWithCounter()
+        self.data_track = OrderedDict()
 
     def register(self, file_loader: FileLoader, count_increase=True):
         filetype = file_loader.filetype
@@ -20,10 +21,11 @@ class ComposerUsedBy(BaseUsedBy, UsedByToJsonMixin):
         if filetype in self.SUPPORTED_FILETYPE:
             if filetype in FILETYPES_TRACK:
                 self.data_track[instance_id] = file_loader
-                if not count_increase:
-                    self.data_track.counter_adjust(instance_id, -1)
         else:
             raise ValueError
+
+    def to_json(self, no_used_by: bool = True):
+        return {"data_track": [i.to_json_basic() for i in self.data_track.values()]}
 
 
 class NameMasker(ObjectAccessProxier):
@@ -68,9 +70,10 @@ class ComposerInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
         d = {
             "uuid": self.uuid,
             "filetype": self.filetype,
+            "namespace": self.namespace,
 
             "name": self.name.to_json(),
-            "namespace": self.namespace,
+            "no": self.no,
             "realname": self.realname,
             "nickname": self.nickname,
             "intro": self.intro,
@@ -85,9 +88,10 @@ class ComposerInfo(FileLoader, UsedByRegisterMixin, InterpageMixin):
         d = {
             "uuid": self.uuid,
             "filetype": self.filetype,
+            "namespace": self.namespace,
 
             "name": self.name.to_json(),
-            "namespace": self.namespace,
+            "no": self.no,
             "realname": self.realname,
             "nickname": self.nickname,
             "intro": self.intro,
