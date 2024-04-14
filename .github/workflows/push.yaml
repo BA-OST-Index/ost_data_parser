@@ -6,7 +6,7 @@ on:
       - 'main_v2'
   workflow_dispatch:
   repository_dispatch:
-    types: [ost-data-update-event]
+    types: [ost-data-push-direct]
 
 jobs:
   build:
