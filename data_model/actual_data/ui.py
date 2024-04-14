@@ -1,5 +1,8 @@
 from collections import OrderedDict
+
 from .track import TrackInfo
+from .character import CharacterListManager
+
 from ..types.url import UrlModel
 from ..loader import i18n_translator, FileLoader
 from ..tool.parent_data import IParentData
@@ -19,7 +22,12 @@ class UiInfo(FileLoader, IParentData, InterpageMixin):
         self.image = UrlModel()
         self.image.load(self.data["image"])
 
+        self.characters = CharacterListManager()
+        self.characters.load(self.data["characters"] if "characters" in self.data.keys() else [])
+
         self.track.register(self)
+        for i in self.characters.character:
+            i.register(self)
 
     @staticmethod
     def _get_instance_id(data: dict):
@@ -35,6 +43,7 @@ class UiInfo(FileLoader, IParentData, InterpageMixin):
             "track": self.track.to_json_basic(),
             "image": self.image.to_json_basic(),
             "id": self.data["name"].split("_")[1],
+            "characters": self.characters.to_json_basic(),
 
             "parent_data": self.parent_data_to_json(),
             "interpage": self.get_interpage_data()
@@ -72,19 +81,10 @@ class UiInfoEvent(UiInfo):
         return "UI_" + "_".join([str(data["event_id"]), data["name"].split("_")[-2]])
 
     def to_json(self):
-        return {
-            "uuid": self.uuid,
-            "filetype": self.filetype,
-            "name": self.name.to_json_basic(),
-            "desc": self.desc.to_json_basic(),
-            "track": self.track.to_json_basic(),
-            "image": self.image.to_json_basic(),
-            "event_id": self.event_id,
-            "id": self.data["name"].split("_")[-2],
-
-            "parent_data": self.parent_data_to_json(),
-            "interpage": self.get_interpage_data()
-        }
+        d = super().to_json()
+        d["event_id"] = self.event_id
+        d["id"] = "_".join(self.data["name"].split("_")[:-1])
+        return d
 
     def _get_instance_offset(self, offset: int):
         instance = super()._get_instance_offset(offset)
