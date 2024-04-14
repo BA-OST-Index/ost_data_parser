@@ -3,7 +3,7 @@ from .used_by import BaseUsedBy, OrderedDictWithCounter, UsedByToJsonMixin, Used
 from .related_to import BaseRelatedTo, RelatedToJsonMixin, RelatedToRegisterMixin
 from ..constant.file_type import FILETYPES_STORY, FILETYPES_TRACK, FILE_STORY_EVENT, FILE_BATTLE_EVENT, \
     FILETYPES_CHARACTER, FILETYPES_BACKGROUND, FILE_BACKGROUND_INFO, FILE_BACKGROUND_INFO_DIRECT, \
-    FILE_BACKGROUND_INFO_INDIRECT_COMMS
+    FILE_BACKGROUND_INFO_INDIRECT_COMMS, FILETYPES_UI
 from ..types.metatype.base_model import BaseDataModelListManager
 from ..types.url import UrlModel
 from ..tool.interpage import InterpageMixin
@@ -49,10 +49,10 @@ class CharacterRelatedTo(BaseRelatedTo, RelatedToJsonMixin):
 
 
 class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
-    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_TRACK, *FILETYPES_BACKGROUND, *FILETYPES_CHARACTER,
+    SUPPORTED_FILETYPE = [*FILETYPES_STORY, *FILETYPES_TRACK, *FILETYPES_BACKGROUND, *FILETYPES_CHARACTER, *FILETYPES_UI,
                           FILE_STORY_EVENT]
     _components = ["data_story", "data_track", "data_background", "data_background_direct", "data_background_by_comm",
-                   "data_character"]
+                   "data_character", "data_ui"]
 
     def __init__(self):
         self.data_story = OrderedDictWithCounter()
@@ -62,6 +62,7 @@ class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
         # by_comm 指的就是，只是在通讯过程中出现在这个背景里，而并不实际在背景里出现
         self.data_background_by_comm = OrderedDictWithCounter()
         self.data_character = OrderedDictWithCounter()
+        self.data_ui = OrderedDictWithCounter()
 
     def register(self, file_loader: FileLoader, count_increase=True):
         filetype = file_loader.filetype
@@ -89,6 +90,10 @@ class CharacterUsedBy(BaseUsedBy, UsedByToJsonMixin):
                 self.data_character[instance_id] = file_loader
                 if not count_increase:
                     self.data_character.counter_adjust(instance_id, -1)
+            elif filetype in FILETYPES_UI:
+                self.data_ui[instance_id] = file_loader
+                if not count_increase:
+                    self.data_ui.counter_adjust(instance_id, -1)
         else:
             raise ValueError
 
