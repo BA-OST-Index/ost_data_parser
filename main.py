@@ -1,5 +1,5 @@
 import os
-import json
+import pickle
 import time
 import shutil
 from functools import partial
@@ -29,7 +29,7 @@ print(f"Linking Stuff Together: {time.time() - start_time:0.2f}")
 BASE_EXPORT = "data_export"
 
 join_base = partial(os.path.join, BASE_EXPORT)
-dump_json = partial(json.dump, ensure_ascii=False)
+dump_json = partial(pickle.dump)
 
 # deleting old files
 start_time = time.time()
@@ -51,7 +51,7 @@ def write_loader(target_loader):
     loader = target_loader.loader
     path = loader.get_path(filename=True)
     create_export_dir(loader)
-    with open(join_base(path), mode="w", encoding="UTF-8") as file:
+    with open(join_base(path), mode="wb") as file:
         dump_json(loader.to_json(), file)
 
 
@@ -60,7 +60,7 @@ def write_loader2(target_loader):
     loader = target_loader
     path = loader.get_path(filename=False)
     os.makedirs(join_base(path), exist_ok=True)
-    with open(join_base(path, "_all.json"), mode="w", encoding="UTF-8") as file:
+    with open(join_base(path, "_all.json"), mode="wb") as file:
         dump_json(loader.to_json(), file)
 
 
@@ -69,7 +69,7 @@ def write_loader3(target_loader):
     loader = target_loader
     path = loader.get_path(filename=False)
     os.makedirs(join_base(os.path.split(path)[0]), exist_ok=True)
-    with open(join_base(path), mode="w", encoding="UTF-8") as file:
+    with open(join_base(path), mode="wb") as file:
         dump_json(loader.to_json(), file)
 
 
@@ -115,7 +115,7 @@ for char_type in CHARACTERS.including:
         splited = path.split("/")
         path = "/".join([*splited, splited[-1] + ".json"])
 
-        with open(join_base(path), mode="w", encoding="UTF-8") as file:
+        with open(join_base(path), mode="wb") as file:
             dump_json(loader.to_json(), file)
 
         if char.loader.filetype == -53:

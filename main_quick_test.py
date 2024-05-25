@@ -1,6 +1,5 @@
 import time
-import os
-import json
+import pickle
 from functools import partial
 
 from data_model.loader.loader_detect import get_loader_by_filepath
@@ -25,7 +24,7 @@ PostExecutionManager.execute_pool("reference_data")
 PostExecutionManager.execute_pool("background_character_direct")
 print(f"Linking Stuff Together: {time.time() - start_time:0.2f}")
 
-dump_json = partial(json.dumps, ensure_ascii=False)
+dump_json = partial(pickle.dumps)
 
 
 def write_loader(target_loader):
