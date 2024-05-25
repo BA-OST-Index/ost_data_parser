@@ -13,6 +13,7 @@ from data_model.loader.manager_constant import constant_manager
 from data_model.actual_data.used_by import BaseUsedBy, UsedByRegisterMixin, OrderedDictWithCounter, UsedByToJsonMixin
 from data_model.actual_data.related_to import BaseRelatedTo, RelatedToJsonMixin, RelatedToRegisterMixin
 from data_model.actual_data._track.track_version import *
+from data_model.actual_data._track.track_playback import TrackPlayback
 from data_model.actual_data.tag import TagListManager
 from data_model.actual_data.composer import ComposerInfo
 
@@ -369,6 +370,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
 
         self.stats = TrackStats(data["stats"])
         self.stats.second_init(self)
+        self.playback_info = TrackPlayback(self.instance_id)
 
         self.bond_chars = []
 
@@ -400,6 +402,7 @@ class TrackInfo(FileLoader, UsedByRegisterMixin, InterpageMixin, RelatedToRegist
             "track_type": self.track_type,
             "duration": self.duration,
             "duration_splited": seconds_to_minutes(self.duration),
+            "playback_info": self.playback_info.to_json_basic(),
 
             "composer": self.composer.to_json_basic(),
             "tags": self.tags.to_json_basic(),
