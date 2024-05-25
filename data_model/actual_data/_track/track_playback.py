@@ -19,7 +19,8 @@ class TrackPlaybackDataEntry(IToJson):
     def process(self):
         self.result = {
             "id": self.nx_data["id"],
-            "type": self.nx_data["type"],
+            "path": self.nx_data["path"],
+            "type": i18n_translator.query(f'[TRACK_PLAYBACK_TYPE_{self.nx_data["type"]}]'),
             "desc": i18n_translator.query(self.nx_data["desc"]),
             "timestamp": self.nx_data["timestamp"]
         }
@@ -30,10 +31,17 @@ class TrackPlaybackDataEntry(IToJson):
             self.result["iframe_url"] = self.iframe_data["url_detail"]
 
     def to_json(self):
-        return self.result
+        return {
+            "id": self.result["id"],
+            "path": self.result["path"],
+            "type": self.result["type"].to_json(),
+            "desc": self.result["desc"].to_json(),
+            "timestamp": self.result["timestamp"],
+            "iframe_url": self.result["iframe_url"]
+        }
 
     def to_json_basic(self):
-        return self.result
+        return self.to_json()
 
 
 class TrackPlaybackDataListManager(UserList, IToJson):
