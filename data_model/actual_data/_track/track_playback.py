@@ -14,6 +14,8 @@ class TrackPlaybackDataEntry(IToJson):
 
     @staticmethod
     def get_iframe_url(para1_type: int, para2_id: int, url: str = "https://music.163.com/outchain/player"):
+        if url == "":
+            url = "https://music.163.com/outchain/player"
         return f"{url}?type={para1_type}&id={para2_id}"
 
     def process(self):
