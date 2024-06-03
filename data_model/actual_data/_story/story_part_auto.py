@@ -67,7 +67,8 @@ class StoryPartAutoData(IToJson):
         self.data_special = {
             "flag": self.data["special"]["flag"],
             "track": None if self.data["special"]["track"] == "OST_0" else TrackInfo.get_instance(
-                self.data["special"]["track"])
+                self.data["special"]["track"]),
+            "char": [] if "char" not in self.data["special"].keys() else self.data["special"]["char"]
         }
 
     def load(self):
@@ -209,4 +210,7 @@ class StoryPartAutoData(IToJson):
         # traceback:
         # File "F:\GitFile\BA_OST_Index_Parser\data_model\actual_data\story.py", line 355, in to_json
         #   t["bgm_special"] = self.part.to_json_basic_tracks()
-        return [self.data_special["track"].to_json_basic()]
+        try:
+            return [self.data_special["track"].to_json_basic()]
+        except Exception:
+            return []
