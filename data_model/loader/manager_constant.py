@@ -19,20 +19,27 @@ class ConstantManager:
         for key in self.filelist:
             with open(self.join_path(key), mode="r", encoding="UTF-8") as file:
                 temp = json.load(file)
-                id_ = temp["file_id"]
-                del temp["file_id"], temp["filetype"]
+                try:
+                    id_ = temp["file_id"]
+                    del temp["file_id"], temp["filetype"]
+                except KeyError:
+                    # 默认fallback策略
+                    id_ = os.path.splitext(key)[0]
 
                 self.constant[id_] = temp
 
     def query(self, constant_id: str, value: str or int):
         result = self.constant[constant_id][str(value)]
-        if "en" in result.keys():
-            # It's an LangStringModel object!
-            t = LangStringModel()
-            t.load(result)
-            return t
+        if isinstance(result, dict):
+            if "en" in result.keys():
+                # It's an LangStringModel object!
+                t = LangStringModel()
+                t.load(result)
+                return t
+            else:
+                # Maybe just a normal dict, like in `composer.json`
+                return result
         else:
-            # Maybe just a normal dict, like in `composer.json`
             return result
 
     def query_by_constant_file(self, constant_id: str):
