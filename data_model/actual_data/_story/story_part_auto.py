@@ -189,9 +189,13 @@ class StoryPartAutoData(IToJson):
             "char_to_char": self.data["char_to_char"],
             "special": {
                 "flag": self.data_special["flag"],
-                "track": None if self.data_special["track"] is None else self.data_special["track"].to_json_basic()
+                "track": None if self.data_special["track"] is None else self.data_special["track"].to_json_basic(),
+                "char": self.data_special["char"]
             }
         }
+
+    def to_json_basic(self):
+        return self.to_json()
 
     @property
     def bgm_special(self):
